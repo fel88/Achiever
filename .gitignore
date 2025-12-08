@@ -1,0 +1,9 @@
+config.xml
+.vs/
+bin/
+obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+*.db1

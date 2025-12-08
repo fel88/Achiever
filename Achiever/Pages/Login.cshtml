@@ -1,0 +1,198 @@
+﻿@page
+@using Achiever.Model
+@model Achiever.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@{
+    var ctx = new AchieverContext();
+    var isLocal = Request.IsLocal();
+}
+
+@section Scripts{
+    @if (isLocal)
+    {
+        <script>
+            $(document).ready(function () {
+                $(".quick-auth-btn").click(function (ee) {
+                    ee.preventDefault();
+                    $("#login-input").val('admin');
+                    $("#password-input").val('123');
+                });
+            });
+        </script>
+    }
+    <script>
+        $(document).ready(function () {
+
+            const sintab = $("#signin-table");
+            const suptab = $("#signup-table");
+
+            $("#register-btn").click(async function (e) {
+
+                e.preventDefault();
+
+                if ($(suptab).is(":hidden")) {
+                    $(sintab).hide();
+                    $(suptab).show();
+                    return;
+                }
+
+                let t = await fetch('/api/Login/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(d)
+                }
+                ).then(function () {
+
+
+                    window.location = 'Cabinet';
+                });
+            });
+
+
+            $("#login-btn").click(async function (e) {
+
+
+                e.preventDefault();
+
+                if ($(sintab).is(":hidden")) {
+                    $(sintab).show();
+                    $(suptab).hide();
+                    return;
+                }
+                const loginv = $("#login-input").val();
+                if (!loginv) {
+                    $("#login-input").css('background-color', 'pink');
+                    return;
+
+                }
+                $("#login-input").css('background-color', 'white');
+
+                const passw = $("#password-input").val();
+                if (!passw || passw.length < 5) {
+                    $("#password-input").css('background-color', 'pink');
+                    $("#password-input").next("div").css('display', 'inline-block');
+                    return;
+                }
+                $("#password-input").css('background-color', 'white');
+                let d = {
+                    login: loginv,
+                    password: $("#password-input").val()
+                }
+                await fetch('/api/Login', {
+
+                    method: 'POST',
+                    headers: {
+
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(d)
+                }
+                ).then(async function (r)  {
+                    if (r.ok) {
+                        
+                        window.location = 'Cabinet';
+                    } else {
+                        await r.json().then((res) => {
+                            if (res.code == 2) {
+                                alert('Пользователь деактивирован');                                
+                            } else if (res.code == 1) {
+                                alert('Пользователь не найден');
+                            }
+                        });                        
+                        console.log(r.status);
+                    }
+                });
+
+            });
+        });
+    </script>
+}
+<h1>Login</h1>
+@{
+    // if (isLocal)
+    // {
+    //     foreach (var item in ctx.Users)
+    //     {
+    //         <a class="quick-auth-btn" href="#">@item.Login</a>
+    //     }
+    // }
+}
+
+<table id="signin-table">
+    <tbody>
+        <tr>
+            <td>
+                Логин:
+            </td>
+            <td>
+                <input id="login-input" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Пароль:
+            </td>
+            <td>
+                <input type="password" id="password-input" />
+                <div style="display:none">
+                    пароль должен быть не меньше 5 символов!
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<table id="signup-table" style="display:none">
+    <tbody>
+        <tr>
+            <td>
+                Логин:
+            </td>
+            <td>
+                <input id="login-input" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Имя:
+            </td>
+            <td>
+                <input id="name-input" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                E-mail:
+            </td>
+            <td>
+                <input id="email-input" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Пароль:
+            </td>
+            <td>
+                <input type="password" id="password-input" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Повторение пароля:
+            </td>
+            <td>
+                <input type="password" id="password-repeat" />
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<a id="login-btn" href="#">Войти</a>
+<a id="register-btn" href="#">Регистрация</a>

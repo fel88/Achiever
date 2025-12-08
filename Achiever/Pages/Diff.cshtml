@@ -1,0 +1,121 @@
+﻿@page
+@using Achiever.Model
+@using System.Linq;
+@using Microsoft.EntityFrameworkCore;
+@using System.Globalization;
+
+@model Achiever.Pages.DiffModel
+@{
+    ViewData["Title"] = "Diff";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+<script src="~/js/Chart.min.js" asp-append-version="true"></script>
+<h1>Diff</h1>
+<style>
+
+</style>
+
+@section Scripts{
+
+
+    <script>
+
+        async function loadAllBadges() {
+            const divs = document.querySelectorAll(".challenge-badge-div");
+            divs.forEach(async (d) => {
+                await fetch('/api/Cabinet/badge/' + d.getAttribute('challengeId'), {
+                    method: 'GET',
+                }).then((r) => {
+                    if (r.ok) {
+                        return r.text();
+                    } else {
+                        console.log(r.status);
+                        throw new Error('promise chain cancelled');
+                    }
+                }).then((r) => { d.innerHTML = r; });
+            });
+        }
+
+        $(document).ready(async function () {
+
+            await loadAllBadges();
+
+        });
+    </script>
+
+    }
+@{
+
+    var ctx = new AchieverContext();
+
+    var user = Helper.GetUser(HttpContext.Session);
+    foreach (var chitem2 in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToList())
+    {
+        var item = chitem2.Challenge;
+        var chitem = chitem2.Challenge;
+        if (chitem2.IsComplete)
+            continue;
+
+        var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
+
+        bool has = false;
+        foreach (var bb in item.Aims)
+        {
+            var ach = ctx.AchievementItems.Find(bb.AchievementId);
+            var pld = Helper.GetProgressLastDay(bb, a1);
+            if (pld <= 0)
+                continue;
+            has = true;
+            break;
+        }
+
+        if (!has)
+            continue;
+
+
+
+        <div style="border-radius: 5px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
+            <div>
+
+                <span class="challenge-badge-div" challengeId="@chitem2.Challenge.Id"></span>
+
+            </div>
+            <div>
+
+                @{
+
+                    var pld1 = Helper.GetProgressLastDay(chitem2);
+                    var curnp = Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId);
+
+                    <h3>@item.Name (@(Math.Round(curnp * 100, 1))%) +@(Math.Round(pld1 * 100, 1))%</h3>
+                    foreach (var bb in item.Aims)
+                    {
+                        var ach = ctx.AchievementItems.Find(bb.AchievementId);
+                        var cnstr = Helper.ExtractAimSettings(bb);
+
+                        var pld = Helper.GetProgressLastDay(bb, a1);
+                        if (pld <= 0)
+                            continue;
+
+                        string period = "";
+                        if (cnstr != null)
+                        {
+                            period = $"({cnstr.Period})";
+                        }
+                        var curnp1 = Helper.GetPercentOfAim(bb, a1);
+
+                        <div style="background-color:white; border-radius: 5px; padding:5px; margin-bottom:10px; border: 1px blue">
+                            @{
+                                <p>@ach.Name @period @bb.Count  (@(Math.Round(curnp1 * 100, 1))%)  +@(Math.Round(pld * 100, 1))%</p>
+                            }
+                        </div>
+                    }
+
+
+                }
+
+            </div>
+        </div>
+    }    
+}
+

@@ -1,0 +1,433 @@
+﻿@page
+@model Achiever.Pages.AdminModel
+@using Achiever.Model
+@using System.Linq;
+@using Microsoft.EntityFrameworkCore;
+@{
+    ViewData["Title"] = "Admin";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@{
+
+    var ctx = new AchieverContext();
+    var user = Helper.GetUser(HttpContext.Session);
+}
+@section Scripts{
+
+
+    <script>
+        $(document).ready(function () {
+
+            $(".inp-name-challenge-ok").click(async function (ee) {
+                ee.preventDefault();
+                let vv = $(this).parents("td").children(".edit-div").children("input").val();
+                if (vv.length == 0) { alert("error"); return; }
+
+                let cid = $(this).attr('itemId');
+                let item = {
+                    itemId: parseInt(cid),
+                    value: vv
+                };
+                await fetch('/api/Admin/challenge/name', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(item)
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+                $(this).closest("div").toggle();
+                $(this).closest("td").children("span").toggle();
+            });
+            $(".inp-name-challenge-cancel").click(async function (ee) {
+                ee.preventDefault();
+
+
+                $(this).closest("div").toggle();
+                $(this).closest("td").children("span").toggle();
+            });
+            $(".reset-owner").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите сбросить пользователя?')) return;
+                let itemId = $(this).attr('itemId');
+
+
+                await fetch('/api/Admin/challenge/owner/reset/' + itemId, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+            });
+
+            $(".a-reset-owner").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите сбросить пользователя?')) return;
+                let itemId = $(this).attr('itemId');
+
+
+                await fetch('/api/Admin/aim/owner/reset/' + itemId, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+            });
+
+            $(".set-owner-myself").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите задать себя как владельца?')) return;
+                let itemId = $(this).attr('itemId');
+
+
+                await fetch('/api/Admin/challenge/owner/set/' + itemId + '/' + @user.Id, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+
+            });
+
+            $(".a-set-owner-myself").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите задать себя как владельца?')) return;
+                let itemId = $(this).attr('itemId');
+
+
+                await fetch('/api/Admin/aim/owner/set/' + itemId + '/' + @user.Id, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+
+            });
+
+            $(".a-set-parent-achievement-item").click(async function (ee) {
+                ee.preventDefault();
+
+                var parentId = parseInt(prompt('Задайте ID родителя'));
+                if (!confirm('Вы уверены что хотите задать родителя как #' + parentId + '?'))
+                    return;
+
+                let itemId = $(this).attr('itemId');
+
+
+                await fetch('/api/Admin/subAchievement/parent/set/' + itemId + '/' + parentId, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+
+            });
+
+            $(".user-switch-enabled").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите переключить enabled данного юзера?')) return;
+                let itemId = $(this).attr('userId');
+
+
+                await fetch('/api/Admin/user/enabled/switch/' + itemId, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+
+            });
+
+
+            $(".label-name-challenge").click(async function (ee) {
+                ee.preventDefault();
+                $(this).closest("span").toggle();
+                let nn = $(this).text();
+
+                $(this).parents("td").children(".edit-div").toggle();
+                $(this).parents("td").children(".edit-div").children("input").val(nn);
+            });
+            $(".make-gold-button").click(async function (ee) {
+                ee.preventDefault();
+                let val = $(this).attr('valueStatus');
+                if (val == 1) {
+                    if (!confirm('Вы уверены что хотите дать полный доступ?')) return;
+                } else {
+                    if (!confirm('Вы уверены что хотите убрать полный доступ?')) return;
+                }
+                let cid = $(this).attr('userId');
+
+                await fetch('/api/Admin/user/gold/' + cid + '/' + val, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+        });
+    </script>
+}
+<h1>Admin</h1>
+
+<a href="/api/Admin/backup" download>скачать базу</a>
+<div>
+    <h3>Юзеры:</h3>
+    <table class="table table-striped col-md-6">
+        <thead>
+            <tr>
+                <th>
+                    Enabled
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Login
+                </th>
+                <th>
+                    IsAdmin
+                </th>
+                <th>
+                    PaidPeriod
+                </th>
+                <th>
+                    GoldUser
+                </th>
+                <th>
+                    Delete
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                foreach (var item in ctx.Users)
+                {
+                    <tr>
+                        <td>
+                            <a href="#" class="user-switch-enabled" userId="@item.Id">@item.Enabled</a>
+                        </td>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            @item.Login
+                        </td>
+                        <td>
+                            @item.IsAdmin
+                        </td>
+                        <td>
+                            @item.PaidPeriod
+                        </td>
+                        <td>
+                            @item.GoldUser
+                            @if (item.GoldUser)
+                            {
+                                <a href="#" class="make-gold-button" userId="@item.Id" valueStatus="0">убрать полный доступ</a>
+                            }
+                            else
+                            {
+                                <a href="#" class="make-gold-button" userId="@item.Id" valueStatus="1">дать полный доступ</a>
+                            }
+                        </td>
+                        <td>
+                            <a href="#">удалить</a>
+                        </td>
+                    </tr>
+
+
+                }
+            }
+        </tbody>
+    </table>
+
+
+    <h3>Челенджи</h3>
+
+    <table class="table table-striped col-md-6">
+        <thead>
+            <tr>
+                <th>
+                    Enabled
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Owner
+                </th>
+
+                <th>
+                    Delete
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+
+                foreach (var item in ctx.Challenges.Include(z => z.Owner))
+                {
+                    <tr>
+                        <td>
+                        </td>
+                        <td>
+                            <span><a class="label-name-challenge" href="#">@item.Name</a></span>
+                            <div class="edit-div" style="display:none">
+                                <input class="inp-name-challenge" type="text" value="@item.Name" />
+                                <a class="inp-name-challenge-ok" itemId="@item.Id" href="#">ok</a>
+                                <a class="inp-name-challenge-cancel" href="#">cancel</a>
+                            </div>
+
+                        </td>
+                        <td>
+                            @if (item.Owner != null)
+                            {
+                                @(item.Owner.Login + " name: " + item.Owner.Name)
+                                <a href="#" itemId="@item.Id" class="reset-owner">сбросить</a>
+                            }
+                            else
+                            {
+                                <text>
+                                    нет владельца
+                                </text>
+                                <a href="#" class="set-owner-myself" itemId="@item.Id">задать себя</a>
+                            }
+                        </td>
+
+
+                        <td>
+                            <a href="#">удалить</a>
+                        </td>
+                    </tr>
+
+
+                }
+            }
+        </tbody>
+    </table>
+
+
+
+    <h3>Упражнения</h3>
+
+    <table class="table table-striped col-md-6">
+        <thead>
+            <tr>
+                <th>
+                    Id
+                </th>
+                <th>
+                    Enabled
+                </th>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Description
+                </th>
+                <th>
+                    Owner
+                </th>
+                <th>
+                    Parent
+                </th>
+
+                <th>
+                    Delete
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+
+                foreach (var item in ctx.AchievementItems.Include(z => z.Owner))
+                {
+                    <tr>
+                        <td>
+                            @item.Id
+                        </td>
+                        <td>
+                        </td>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            @item.Description
+                        </td>
+                        <td>
+                            @if (item.Owner != null)
+                            {
+                                @(item.Owner.Login + " name: " + item.Owner.Name)
+                                <a href="#" itemId="@item.Id" class="a-reset-owner">сбросить</a>
+                            }
+                            else
+                            {
+                                <text>
+                                    нет владельца
+                                </text>
+                                <a href="#" class="a-set-owner-myself" itemId="@item.Id">задать себя</a>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Parent != null)
+                            {
+                                @(item.Parent.Name)
+                            }
+                            else
+                            {
+                                <text>
+                                    нет родителя
+                                </text>
+                                <a href="#" class="a-set-parent-achievement-item" itemId="@item.Id">задать</a>
+                            }
+                        </td>
+
+                        <td>
+                            <a href="#">удалить</a>
+                        </td>
+                    </tr>
+
+
+                }
+            }
+        </tbody>
+    </table>
+</div>

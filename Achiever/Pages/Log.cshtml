@@ -1,0 +1,519 @@
+﻿@page
+@using System.Linq;
+@using Achiever.Model
+@using Microsoft.EntityFrameworkCore;
+@using System.Globalization;
+@model Achiever.Pages.LogModel
+@{
+    ViewData["Title"] = "Log";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@section Scripts{
+    <script>
+
+
+
+        async function fetchLog(period) {
+            let anames = [];
+            await fetch('/api/Log/list/period/' + period)
+                .then((response) => response.json())
+                .then((x) => {
+                    $("#logTable").find('tbody').empty();
+                    console.log(x);
+                    anames = x.names;
+
+                    document.getElementById('recordQty').innerHTML = 'period: ' + period + ' <br/>  total record: ' + x.items.length;
+
+                    for (const item of x.items) {
+                        let date = new Date(Date.parse(item.timestamp));
+                        $("#logTable").find('tbody')
+                            .append($('<tr>').attr('itemid', item.aId).attr('style', 'border: 1px solid black;padding:10px')
+                                .append($('<td>').attr('style', 'border: 1px solid black;padding:10px;')
+                                    .append($('<a>')
+                                        .attr('itemId', item.aId)
+                                        .attr('class', 'item-filter')
+                                        .attr('href', '#')
+                                        .text(x.names.find(function (el) { return el.id == item.aId }).name)
+                                    ))
+                                .append($('<td>')
+                                .attr('style', 'border: 1px solid black;padding:10px;')
+                                    .text(item.doubled  == true ? (item.count + ' x ' + (item.count2 / 100.0) + ' = '+(item.count*item.count2/100.0)) : ('' + item.count))
+                                    .append($('<span>').attr('style', 'color: red;')
+                                        .text(item.penalty !== 0 ? (' штраф ' + item.penalty) : ''))
+                                    .append($('<br/>'))
+                                    .append($('<a>').attr('class', item.doubled == true ? 'repeat-doubled-btn' : 'repeat-btn').attr('itemId', item.aId).attr('href', '#').attr('cnt', item.count).attr('cnt2', item.count2).text('(повторить)'))
+                                )
+                                .append($('<td>').attr('style', 'border: 1px solid black;padding:10px;')
+                                    .append(
+                                        $('<a>')
+                                            .attr('class', 'edit-time-prop-btn prop-btn')
+                                            .attr('href', '#')
+                                            .text(date.toLocaleString())
+
+                                    ).append(
+                                        $('<div>')
+                                            .attr('class', 'edit-prop-div')
+                                            .attr('style', 'display:none')
+                                            .append($('<input>')
+                                                .attr('class', 'day-edit-prop time-input')
+                                                .attr('value', date.getDate())
+                                            ).append($('<input>')
+                                                .attr('class', 'month-edit-prop time-input')
+                                                .attr('value', date.getMonth() + 1)
+                                            ).append($('<input>')
+                                                .attr('class', 'year-edit-prop time-input')
+                                                .attr('value', date.getFullYear())
+                                            ).append($('<input>')
+                                                .attr('class', 'hours-edit-prop time-input')
+                                                .attr('value', date.getHours())
+                                            ).append($('<input>')
+                                                .attr('class', 'minutes-edit-prop time-input')
+                                                .attr('value', date.getMinutes())
+                                            ).append($('<input>')
+                                                .attr('class', 'seconds-edit-prop time-input')
+                                                .attr('value', date.getSeconds())
+                                            )
+                                            .append($('<a>')
+                                                .attr('class', 'edit-time-prop-ok')
+                                                .attr('itemId', item.id) 
+                                                .attr('doubled', item.doubled)
+                                                .attr('href', '#')
+                                                .text('ок')
+                                            )
+                                            .append($('<a>')
+                                                .attr('class', 'edit-prop-cancel')
+                                                .attr('href', '#')
+                                                .text('отмена')
+                                            )
+                                    )
+                                )
+
+                                .append($('<td>').attr('style', 'border: 1px solid black;padding:10px;')
+                                    .append(
+                                        $('<p>').text(item.desc)
+
+                                    ).append(
+                                        $('<a>')
+                                            .attr('class', 'edit-desc-prop-btn prop-btn')
+                                            .attr('href', '#')
+                                            .text('изменить')
+
+                                    ).append(
+                                        $('<div>')
+                                            .attr('class', 'edit-prop-div')
+                                            .attr('style', 'display:none')
+                                            .append($('<input>')
+                                                .attr('class', 'edit-prop')
+                                                .attr('value', item.desc)
+                                            )
+                                            .append($('<a>')
+                                                .attr('class', 'edit-desc-prop-ok')
+                                                .attr('itemId', item.id)
+                                                .attr('href', '#')
+                                                .text('ок')
+                                            )
+                                            .append($('<a>')
+                                                .attr('class', 'edit-prop-cancel')
+                                                .attr('href', '#')
+                                                .text('отмена')
+                                            )
+                                    )
+                                )
+
+
+
+                                .append($('<td>').attr('style', 'border: 1px solid black;padding:10px;')
+                                    .append($('<a>')
+                                        .attr('itemId', item.id)
+                                        .attr('class', 'delete-btn')
+                                        .attr('href', '#')
+                                        .text('удалить')
+                                    ))
+                            );
+                        /*$('#test1').append("<tr>");
+                        $('#test1').append("<td>" + item.name + "</td>");
+                        $('#test1').append("<td>" + item.count + "</td>");
+                        $('#test1').append("<td>" + item.desc + "</td>");
+                        $('#test1').append("<td>" + item.timestamp + "</td>");
+                        $('#test1').append("</tr>");*/
+                    }
+                });
+
+            /////////////////bind click handlers
+
+            $('.repeat-btn').click(function (e) {
+
+                e.preventDefault();
+                const uri = 'api/Default';
+                var aid = $(this).attr('itemId');
+                var val = $(this).attr('cnt');
+
+                if (!confirm('Повторить ' + anames.find(function (el) { return el.id == aid }).name + ' (' + val + ')?'))
+                    return;
+
+                let item = {
+                    achieveId: parseInt(aid),
+                    count: parseInt(val)
+                };
+                console.log(item);
+
+                $.ajax({
+                    type: "POST",
+                    url: uri,
+
+                    data: JSON.stringify(item),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        //location.reload();
+                        window.location.reload(true);
+                        //alert(data);
+                    },
+                    failure: function (errMsg) {
+                        //alert(errMsg);
+                    }
+                });
+
+            });
+
+            $('.repeat-doubled-btn').click(function (e) {
+
+                e.preventDefault();
+                const uri = 'api/Default/doubled';
+                var aid = $(this).attr('itemId');
+                var val = $(this).attr('cnt');
+                var val2 = $(this).attr('cnt2');
+
+                if (!confirm('Повторить ' + anames.find(function (el) { return el.id == aid }).name + ' (' + val +'x'+val2 +')?'))
+                    return;
+
+                let item = {
+                    achieveId: parseInt(aid),
+                    count: parseInt(val),
+                            count2: parseInt(val2)
+                };
+                console.log(item);
+
+                $.ajax({
+                    type: "POST",
+                    url: uri,
+
+                    data: JSON.stringify(item),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        //location.reload();
+                        window.location.reload(true);
+                        //alert(data);
+                    },
+                    failure: function (errMsg) {
+                        //alert(errMsg);
+                    }
+                });
+
+            });
+
+
+
+            $('.delete-btn').click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Are you sure to delete item?'))
+                    return;
+
+                let row = $(this).closest('tr');
+                let id = $(this).attr('itemId');
+                await fetch('/api/Log/' + id, {
+                    method: 'DELETE'
+                }).then((x) => {
+                    if (x.ok) {
+                        row.remove();
+                    } else {
+                        console.log(x.status);
+                    }
+                });
+            });
+
+            let filters = [];
+            function addFilter(id) {
+
+            }
+
+            $(".filters-div").delegate(".x-but", "click", function () {
+                $(this).parent().detach();
+                let cnt = 0;
+                $('.table1 tr').each((i, x) => {
+                    $(x).show();
+                    cnt++;
+                });
+                $(".label1").text('Всего: ' + cnt);
+
+            });
+
+            $('.item-filter').click(async function (ee) {
+                ee.preventDefault();
+                let itemId = $(this).attr("itemId");
+                $(".filters-div").empty();
+                $(".filters-div").append("<div class='filter' style='display:flex'><div >" + $(this).text() + "</div><div class='x-but' style='border-radius:100%; width: 20px;height:20px; background-color: #f99;padding: 5px;'>x</div></div>");
+                let cnt = 0;
+                $('.table1 tr').each((i, x) => {
+                    let id = $(x).attr('itemId');
+                    if (id !== itemId) {
+                        $(x).hide();
+                    } else {
+                        $(x).show();
+                        cnt++;
+                    }
+                });
+
+                $(".label1").text('Всего: ' + cnt);
+
+            });
+
+            $(".edit-prop-ok").click(async function (ee) {
+                ee.preventDefault();
+                $(this).closest(".edit-prop-div").toggle();
+                let inp = $(this).closest(".input-edit-prop");
+
+
+                let row = $(this).closest('tr');
+                let id = $(this).attr('itemId');
+                let data = {
+                    value: inp.val()
+                };
+                await fetch('/api/Log/time' + id, {
+                    method: 'PATCH',
+                    body: JSON.stringify(data),
+                    headers: [
+                        'content-type'
+                    ]
+
+                }).then((x) => {
+                    if (x.ok) {
+
+                    } else {
+                        console.log(x.status);
+                    }
+                });
+            });
+
+            $(".edit-desc-prop-ok").click(async function (ee) {
+                ee.preventDefault();
+                $(this).closest(".edit-prop-div").toggle();
+                let inp1 = $(this).parent().find(".edit-prop").val();
+
+                //var date = new Date(inp3, inp2-1, inp1, inp4, inp5, inp6);
+                //new Date(year, monthIndex [, day [, hours [, minutes [, seconds [, milliseconds]]]]])
+
+                //let row = $(this).closest('tr');
+                let id = $(this).attr('itemId');
+                let data = {
+                    desc: inp1
+                };
+
+                await fetch('/api/Log/desc/' + id, {
+                    method: 'PATCH',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                }).then((x) => {
+                    $(this).closest(".edit-prop-div").toggle();
+                    $(this).parent("div").parent().children(".prop-btn").toggle();
+                    if (x.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(x.status);
+                    }
+                });
+            });
+
+            $(".edit-time-prop-ok").click(async function (ee) {
+                ee.preventDefault();
+                $(this).closest(".edit-prop-div").toggle();
+                let inp1 = $(this).parent().find(".day-edit-prop").val();
+                let inp2 = $(this).parent().find(".month-edit-prop").val();
+                let inp3 = $(this).parent().find(".year-edit-prop").val();
+                let inp4 = $(this).parent().find(".hours-edit-prop").val();
+                let inp5 = $(this).parent().find(".minutes-edit-prop").val();
+                let inp6 = $(this).parent().find(".seconds-edit-prop").val();
+
+                //var date = new Date(inp3, inp2-1, inp1, inp4, inp5, inp6);
+                //new Date(year, monthIndex [, day [, hours [, minutes [, seconds [, milliseconds]]]]])
+
+                //let row = $(this).closest('tr');
+                let id = $(this).attr('itemId');
+
+                let doubled = $(this).attr('doubled');
+
+                let data = {
+                    doubled: doubled,
+                    day: parseInt(inp1),
+                    year: parseInt(inp3),
+                    month: parseInt(inp2),
+                    hours: parseInt(inp4),
+                    minutes: parseInt(inp5),
+                    seconds: parseInt(inp6)
+                };
+
+                await fetch('/api/Log/time/' + id, {
+                    method: 'PATCH',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                }).then((x) => {
+                    $(this).closest(".edit-prop-div").toggle();
+                    $(this).parent("div").parent().children(".prop-btn").toggle();
+                    if (x.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(x.status);
+                    }
+                });
+            });
+
+            $('.edit-prop-btn').click(async function (ee) {
+                ee.preventDefault();
+                $(this).next(".edit-prop-div").toggle();
+                $(this).hide();
+            });
+
+            $('.edit-time-prop-btn').click(async function (ee) {
+                ee.preventDefault();
+                $(this).next(".edit-prop-div").toggle();
+                $(this).hide();
+            });
+
+            $('.edit-desc-prop-btn').click(async function (ee) {
+                ee.preventDefault();
+                $(this).next(".edit-prop-div").toggle();
+                $(this).hide();
+            });
+
+            $('.edit-prop-cancel').click(async function (ee) {
+                ee.preventDefault();
+                $(this).closest(".edit-prop-div").toggle();
+                $(this).parent("div").parent().children(".prop-btn").toggle();
+
+            });
+        }
+
+        function getTodayLog() {
+            fetchLog('today');
+        }
+        function getYesterdayLog() {
+            fetchLog('yesterday');
+        }
+        function getWeekLog() {
+            fetchLog('week');
+        }
+        function getMonthLog() {
+            fetchLog('month');
+        }
+        function getYearLog() {
+            fetchLog('year');
+        }
+        function getAllLog() {
+            fetchLog('all');
+        }
+        $(document).ready(async function () {
+            fetchLog('today');
+
+
+        });
+    </script>
+}
+<h1>Log</h1>
+<style>
+    .time-input {
+        width: 30px
+    }
+
+    .filters-div {
+        display: flex;
+        padding: 5px;
+    }
+
+    .filter {
+        border-radius: 20px;
+        background-color: lightblue;
+        margin: 5px;
+        padding: 5px;
+    }
+
+    .x-but {
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 100%;
+    }
+</style>
+@{
+    void RenderEditProp(string propName, string value)
+    {
+        <a class="edit-prop-btn prop-btn" href="#">@value</a>
+        <div class="edit-prop-div" style="display:none">
+            <input class="input-edit-prop" value="@value" />
+            <a class="edit-prop-ok" href="#">ок</a>
+            <a class="edit-prop-cancel" href="#">отмена</a>
+        </div>
+    }
+
+    void RenderDateTimeEditProp(string propName, DateTime value, int itemId)
+    {
+        <a class="edit-time-prop-btn prop-btn" href="#">@(value.ToLongDateString() + " " + value.ToLongTimeString())</a>
+        <div class="edit-prop-div" style="display:none">
+            <input class="day-edit-prop time-input" value="@value.Day" />
+            <input class="month-edit-prop time-input" value="@value.Month" />
+            <input class="year-edit-prop time-input" value="@value.Year" />
+            <input class="hours-edit-prop time-input" value="@value.Hour" />
+            <input class="minutes-edit-prop time-input" value="@value.Minute" />
+            <input class="seconds-edit-prop time-input" value="@value.Second" />
+            <a class="edit-time-prop-ok" itemId="@itemId" href="#">ок</a>
+            <a class="edit-prop-cancel" href="#">отмена</a>
+        </div>
+    }
+
+    void RenderDescEditProp(string propName, string value, int itemId)
+    {
+        <p>@(value)</p>
+        <a class="edit-desc-prop-btn prop-btn" href="#">изменить</a>
+        <div class="edit-prop-div" style="display:none">
+            <input class="edit-prop" value="@value" />
+            <a class="edit-desc-prop-ok" itemId="@itemId" href="#">ок</a>
+            <a class="edit-prop-cancel" href="#">отмена</a>
+        </div>
+    }
+
+    var context = new AchieverContext();
+    var user = Helper.GetUser(HttpContext.Session);
+
+    <button onclick="getTodayLog()">today</button>
+    <button onclick="getYesterdayLog()">yesterday</button>
+    <button onclick="getWeekLog()">week</button>
+    <button onclick="getMonthLog()">month</button>
+    <button onclick="getYearLog()">year</button>
+    <button onclick="getAllLog()">all</button>
+    <br />
+    <label id="recordQty">total records: 0</label>
+    <br />
+    <div class="filters-div">
+    </div>
+    <div class="label1"></div>
+
+    <table id="logTable" class="table1" style="border: solid 1px;border:1">
+        <thead>
+            <tr style=" border: 1px solid black;padding:10px;">
+                <th style=" border: 1px solid black;padding:10px;"></th>
+                <th style=" border: 1px solid black;padding:10px;">Количество</th>
+                <th style=" border: 1px solid black;padding:10px;">Когда</th>
+                <th style=" border: 1px solid black;padding:10px;">Описание</th>
+                <th style=" border: 1px solid black;padding:10px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+}

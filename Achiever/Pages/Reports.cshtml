@@ -1,0 +1,270 @@
+﻿@page
+@using System.Linq;
+@using Achiever.Model
+@using Microsoft.EntityFrameworkCore;
+@using System.Globalization;
+@model Achiever.Pages.ReportsModel
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+<script src="~/js/Chart.min.js" asp-append-version="true"></script>
+<h1>Reports</h1>
+<style>
+    .month-select-btn-selected {
+        background-color: blue;
+        color: white;
+    }
+
+    .month-select-btn {
+        margin: 10px;
+        padding: 10px;
+        border-radius: 20px;
+    }
+
+    .year-select-btn-selected {
+        background-color: blue;
+        color: white;
+    }
+
+    .year-select-btn {
+        margin: 10px;
+        padding: 10px;
+        border-radius: 20px;
+    }
+
+    .activity-select-btn-selected {
+        background-color: blue;
+        color: white;
+    }
+
+    .row {
+        display: flex;
+    }
+
+    .column {
+        flex: 50%;
+    }
+
+    .activity-select-btn {
+        margin: 10px;
+        padding: 5px;
+        border-radius: 10px;
+    }
+</style>
+@{
+    var context = new AchieverContext();
+    var user = Helper.GetUser(HttpContext.Session);
+    <div>
+        <p>Период времени:</p>
+        <a style="margin: 10px;" class="day-chart-btn" href="#">День</a>
+        <a style="margin: 10px;" class="month-chart-btn" href="#">Месяц</a>
+        <a style="margin: 10px;" class="year-chart-btn" href="#">Год</a>
+    </div>
+    <div>
+        <p>Месяц:</p>
+        @for (int i = 0; i < 12; i++)
+        {
+            if (DateTime.Now.Month == (i + 1))
+            {
+                <a monthId="@(i + 1)" class="month-select-btn month-select-btn-selected" href="#">@CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i + 1)</a>
+            }
+            else
+            {
+                <a monthId="@(i + 1)" class="month-select-btn" href="#">@CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i + 1)</a>
+            }
+        }
+
+    </div>
+
+    <div>
+        <p>Год:</p>
+        @{
+            int[] yy = null;
+            if (context.AchievementValueItems.Any())
+            {
+                yy = context.AchievementValueItems.GroupBy(z => z.Timestamp.Year).Select(z => z.Key).ToArray();
+            }
+            if (yy != null)
+                foreach (var year in yy)
+                {
+                    <a yearId="@(year)" class="year-select-btn" href="#">@year</a>
+                }
+        }
+    </div>
+    <div class="row">
+        <div class="column">
+            <p>Упражнение:</p>
+            @foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id))
+            {
+                <a style="margin: 10px;" infoId="@item.Id" class="chart-btn activity-select-btn" href="#">@item.Name</a>
+                <br />
+            }
+        </div>
+        <div class="column">
+            <div id="total-div">Всего: </div>
+            <canvas id="myChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+
+}
+
+
+
+@section Scripts{
+    <script>
+        var year = 2020;
+        var month = @DateTime.Now.Month;
+        var infoId = 0;
+        const uri = 'api/Values';
+        let chartType = 'day';
+
+        $(document).ready(function () {
+            $(".day-chart-btn").click(function (e) {
+                chartType = 'day'
+                $(this).parent('div').find('.month-chart-btn').removeClass('month-select-btn-selected');
+                $(this).parent('div').find('.year-chart-btn').removeClass('month-select-btn-selected');
+                $(this).addClass('month-select-btn-selected');
+                updateStat();
+            });
+
+            $(".month-chart-btn").click(function (e) {
+                chartType = 'month'
+                $(this).parent('div').find('.year-chart-btn').removeClass('month-select-btn-selected');
+                $(this).parent('div').find('.day-chart-btn').removeClass('month-select-btn-selected');
+                $(this).addClass('month-select-btn-selected');
+                updateStat();
+            });
+
+            $(".year-chart-btn").click(function (e) {
+                chartType = 'year'
+                $(this).parent('div').find('.month-chart-btn').removeClass('month-select-btn-selected');
+                $(this).parent('div').find('.day-chart-btn').removeClass('month-select-btn-selected');
+                $(this).addClass('month-select-btn-selected');
+                updateStat();
+            });
+
+            $(".month-select-btn").click(function (e) {
+                var monthId = $(this).attr('monthId');
+                month = monthId;
+                $(this).parent('div').find('.month-select-btn').removeClass('month-select-btn-selected');
+                $(this).addClass('month-select-btn-selected');
+                updateStat();
+            });
+
+            $(".year-select-btn").click(function (e) {
+                var id = $(this).attr('yearId');
+                year = id;
+                $(this).parent('div').find('.year-select-btn').removeClass('year-select-btn-selected');
+                $(this).addClass('year-select-btn-selected');
+                updateStat();
+
+            });
+
+            $(".activity-select-btn").click(function (e) {
+
+                $(this).parent('div').find('.activity-select-btn').removeClass('activity-select-btn-selected');
+                $(this).addClass('activity-select-btn-selected');
+
+            });
+
+            function updateStat() {
+
+                $.ajax({
+                    type: "GET",
+                    url: uri + '/' + infoId + '/' + month + '/' + year + '/' + chartType,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+
+
+                        for (var i = 0; i < myChart.data.datasets[0].data.length; i++) {
+                            myChart.data.datasets[0].data[i] = 0;
+                        }
+                        let sum = 0;
+                        for (var i = 0; i < data.data.length; i++) {
+                            myChart.data.datasets[0].data[i] = data.data[i];
+                            sum += data.data[i];
+                        }
+
+                        myChart.data.datasets[0].label = data.name;
+                        myChart.data.labels = data.labels;
+                        myChart.update();
+
+                        $("#total-div").html('Всего: ' + sum)
+                        console.log(data);
+
+                    },
+                    failure: function (errMsg) {
+
+                    }
+                });
+            }
+            $('.chart-btn').click(function (e) {
+
+
+                infoId = $(this).attr('infoId');
+                updateStat();
+
+
+                e.preventDefault();
+            });
+        });
+    </script>
+}
+
+<script>
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var t = [];
+    var tomorrow = new Date('2020-05-01 05:35:32');
+    for (var i = 0; i < 31; i++) {
+        t.push(tomorrow.toDateString());
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+    }
+    var t2 = [];
+    for (var i = 0; i < 31; i++) {
+        //t2.push(getRandomInt(30));
+        t2.push(0);
+    }
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: t,
+            datasets: [{
+                label: 'Подъем корпуса лежа',
+                data: t2,
+                        /*  backgroundColor: [
+                              'rgba(255, 99, 132, 0.2)',
+                              'rgba(54, 162, 235, 0.2)',
+                              'rgba(255, 206, 86, 0.2)',
+                              'rgba(75, 192, 192, 0.2)',
+                              'rgba(153, 102, 255, 0.2)',
+                              'rgba(255, 159, 64, 0.2)'
+                          ],*/    backgroundColor:
+                    'rgba(255, 99, 132, 0.2)',
+                borderColor:
+                    'rgba(255, 99, 132, 1)'
+                ,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+
+
+</script>

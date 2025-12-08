@@ -1,0 +1,682 @@
+﻿@page
+@model Achiever.Pages.ChallengesModel
+@{
+    ViewData["Title"] = "Открытые челенджы";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+
+@using Achiever.Model
+@using System.Linq;
+@using System.Text;
+@using Microsoft.EntityFrameworkCore;
+@using Newtonsoft;
+
+
+<div class="text-center">
+    <h2>Дневник достижений</h2>
+</div>
+
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+
+            $(".set-constraint-inp").click(function () {
+                if ($(this).prop('checked')) {
+                    $(this).next('.min-set-input').show();
+
+                } else {
+                    $(this).next('.min-set-input').hide();
+                }
+            });
+            $(".set-constraint-inp-3").click(function () {
+                if ($(this).prop('checked')) {
+                    $(this).next('.min-set-input-3').show();
+
+                } else {
+                    $(this).next('.min-set-input-3').hide();
+                }
+            });
+            $(".set-constraint-inp-2").click(function () {
+                if ($(this).prop('checked')) {
+                    $(this).next('.min-set-input-2').show();
+
+                } else {
+                    $(this).next('.min-set-input-2').hide();
+                }
+            });
+            $(".type-inp").click(function () {
+                let s = $(this).find('option:selected');
+                let sel = parseInt(s.val());
+                let sub = $(this).parent().parent().find('.sub-div');
+                let sub2 = $(this).parent().parent().find('.sub-div-2');
+                let sub3 = $(this).parent().parent().find('.sub-div-3');
+                if (sel == 2) {
+                    sub.show();
+                    sub3.show();
+                } else {
+                    sub.hide();
+                    sub3.hide();
+                }
+                if (sel == 1) {
+                    sub2.show();
+
+                } else {
+                    sub2.hide();
+                }
+            });
+
+            $(".check-in-btn").click(async function (ee) {
+                ee.preventDefault();
+                let iid = parseInt($(this).attr('itemId'));
+                await fetch('/api/Challenge/checkin/' + iid, {
+                    method: 'POST'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+
+            $(".delete-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите удалить челендж?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/' + cid, {
+                    method: 'DELETE'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".random-badge-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите сменить значок?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/badge/' + cid, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".delete-item-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите удалить упражнение из челенджа?')) return;
+                let aid = $(this).attr('itemId');
+                let cid = $(this).attr('challengeId');
+                await fetch('/api/Challenge/challenge/item/' + cid + '/' + aid, {
+                    method: 'DELETE'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".delete-req-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите удалить челендж из списка требований?')) return;
+                let aid = $(this).attr('itemId');
+                let cid = $(this).attr('challengeId');
+                await fetch('/api/Challenge/challenge/req/' + cid + '/' + aid, {
+                    method: 'DELETE'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".form4").submit(async function (ee) {
+                ee.preventDefault();
+                let t1 = $(this).find("select option:selected");
+                let t4 = $(this).find("#challengeId").val();
+                let t2 = t1.val();
+
+                let json = {
+                    itemId: parseInt(t2),
+                    challengeId: parseInt(t4)
+                };
+                await fetch('/api/Challenge/challenge/required', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(json)
+                }).then((resp) => {
+                    if (resp.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(resp.status);
+                    }
+                });
+            });
+            $(".form3").submit(async function (ee) {
+                ee.preventDefault();
+                let t1 = $(this).find("select option:selected");
+                let t3 = $(this).find("#count-inp").val();
+                let mincnt = $(this).find("#min-count-inp").val();
+                let mincnt2 = $(this).find("#min-count-inp-2").val();
+                let mincnt3 = $(this).find("#min-count-inp-3").val();
+                if (!mincnt) {
+                    mincnt = '0';
+                }
+                if (!mincnt2) {
+                    mincnt2 = '0';
+                }
+                if (!mincnt3) {
+                    mincnt3 = '0';
+                }
+                let type = $(this).find(".type-inp").val();
+                //let mincnt = $(this).find("#").val();
+
+                let t4 = $(this).find("#challengeId").val();
+                let t2 = t1.val();
+                //const form = document.querySelector("#form3");
+                //const form = $(this);
+                //const fd = new FormData(form);
+                let json = {
+                    itemId: parseInt(t2),
+                    count: parseInt(t3),
+                    challengeId: parseInt(t4),
+                    type: parseInt(type),
+                    minCount: parseInt(mincnt),
+                    minCount2: parseInt(mincnt2),
+                    daysCount: parseInt(mincnt3)
+                };
+                await fetch('/api/Challenge/challenge/item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(json)
+                }).then((resp) => {
+                    if (resp.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(resp.status);
+                    }
+                });
+            });
+
+            $("#form1").submit(async function (ee) {
+                ee.preventDefault();
+                const form = document.querySelector("#form1");
+                const fd = new FormData(form);
+                await fetch('/api/Challenge/item', {
+                    method: 'POST',
+                    body: fd
+                }).then((resp) => {
+                    if (resp.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(resp.status);
+                    }
+                });
+            });
+            $("#form2").submit(async function (ee) {
+                ee.preventDefault();
+                const form = document.querySelector("#form2");
+                const fd = new FormData(form);
+                await fetch('/api/Challenge', {
+                    method: 'POST',
+                    body: fd
+                }).then((resp) => {
+                    if (resp.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(resp.status);
+                    }
+                });
+            });
+
+            $("#create-item-btn").click(function () {
+
+            });
+
+            $("#add-item-btn").click(function (ee) {
+                ee.preventDefault();
+                $(this).next("form").find("div").toggle();
+            });
+            $("#add-challenge-btn").click(function (ee) {
+                ee.preventDefault();
+                $(this).next("form").find("div").toggle();
+            });
+
+            $('.aimInfo').hide();
+
+            $('.aim-info-btn').click(function (e) {
+                $(this).next('.aimInfo').toggle();
+                e.preventDefault();
+            });
+
+            $('.add-btn').click(function () {
+                var aid = $(this).attr('achId');
+                console.log('aid: ' + aid);
+                console.log($(this).parent());
+                $(this).parent().children(".hide1-cls").toggle();
+            });
+
+            $('.header1').click(function (ee) {
+                ee.preventDefault();
+                var div1 = $(this).parent().parent().find('.content1');
+                div1.toggle();
+
+            });
+
+            $('.top-up-ok-btn').click(function () {
+                const uri = 'api/Default';
+                var aid = $(this).attr('achId');
+                var val = $(this).parent().children(":input").val();
+
+
+                /*fetch(uri)
+                    .then(response => response.json())
+                    .then(data => _displayItems(data))
+                    .catch(error => console.error('Unable to get items.', error));*/
+                let item = {
+                    achieveId: parseInt(aid),
+                    count: parseInt(val)
+                };
+                console.log(item);
+
+                $.ajax({
+                    type: "POST",
+                    url: uri,
+
+                    data: JSON.stringify(item),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        //location.reload();
+                        window.location.reload(true);
+                        //alert(data);
+                    },
+                    failure: function (errMsg) {
+                        //alert(errMsg);
+                    }
+                });
+
+                /*$.post(uri, JSON.stringify(item), function (data) {
+
+                    console.log('ok');
+                }).fail(function () {
+                    console.error("fail");
+                });*/
+                /*
+                fetch(uri, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(item)
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        //getItems();
+                        //addNameTextbox.value = '';
+                    })
+                    .catch(error => console.error('Unable to add item.', error));
+
+        */
+
+
+            });
+
+            $('.top-up-cancel-btn').click(function () {
+                $(this).parent().children(".hide1-cls").toggle();
+            });
+        });
+    </script>
+}
+
+
+
+<div>
+    <a id="add-challenge-btn" href="#">добавить челендж</a>
+    <form id="form2">
+        <div style="background-color: lightblue; display: none">
+            <table>
+                <tr>
+                    <td>
+                        Название челенджа:
+                    </td>
+                    <td>
+                        <input name="name" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Время учета достижений:
+                    </td>
+                    <td>
+                        <select name="startTime">
+                            <option>За все время</option>
+                            <option>С момента создания челенджа</option>
+                            <option>С момента принятия челенджа</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Описание:
+                    </td>
+                    <td>
+                        <textarea name="desc"></textarea>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="#">+добавить упражнение</a>
+                    </td>
+                    <td>
+                        <a href="#">+добавить требуемый челендж</a>
+                    </td>
+
+                </tr>
+
+            </table>
+            <input id="create-challenge-btn" type="submit" value="создать" />
+        </div>
+    </form>
+</div>
+<div>
+    <a id="add-item-btn" href="#">добавить упражнение</a>
+    <form id="form1">
+        <div style="background-color: lightblue; display: none">
+            <table>
+                <tr>
+                    <td>
+                        Название упражнения:
+                    </td>
+                    <td>
+                        <input name="name" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Описание:
+                    </td>
+                    <td>
+                        <textarea name="desc"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Ненакапливаемое (не может складываться как дневной рекорд):
+                    </td>
+                    <td>
+                        <input type="checkbox" name="noncumulative" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Единичное (в каждом подходе всегда только 1 повторение, не учавствует в дневных рекордах):
+                    </td>
+                    <td>
+                        <input type="checkbox" name="singular" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Двойное (записывется количество повторений + доолнительный параметр, например поднимаемый вес):
+                    </td>
+                    <td>
+                        <input type="checkbox" name="doubled" />
+                    </td>
+                </tr>
+            </table>
+            <input id="create-item-btn" type="submit" value="создать" />
+        </div>
+    </form>
+</div>
+
+@{
+    var ctx = new AchieverContext();
+
+    var user = Helper.GetUser(HttpContext.Session);
+
+    <h2>Открытые челенджы:</h2>
+    for (int round = 0; round < 2; round++)
+    {
+        if(round==1){
+           <h2>Ваши активные челенджы </h2>
+        }
+    foreach (var item in ctx.Challenges.Include(z => z.Aims))
+    {
+        if (!(item.OwnerId == null || item.OwnerId == user.Id)) continue;
+        var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
+        if (round==0 && a1 != null)
+            continue;
+
+        if (round==1 && a1 == null)
+            continue;
+
+
+        <div style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
+            @{
+
+                <h3><a href="#" class="header1">Челендж: @item.Name </a></h3>
+
+                @if (item.OwnerId == user.Id)
+                {
+                    <a class="delete-challenge-btn" itemId="@item.Id" href="#">удалить челендж</a>
+                    <a class="random-badge-challenge-btn" itemId="@item.Id" href="#">новый рандомный значок</a>
+                    <a class="add-item-btn" href="#">+ добавить упражнение</a>
+                    <form class="form3">
+                        <select>
+                            @foreach (var aitem in ctx.AchievementItems.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
+                            {
+                                <option value="@aitem.Id">@aitem.Name</option>
+                            }
+                        </select>
+                        <div>
+                            Тип упражнения:
+                            <select class="type-inp">
+                                <option value="0">Суммарное количество</option>
+                                <option value="1">Кол-во за подход</option>
+                                <option value="2">Кол-во за день (+минимум за подход)</option>
+                                <option value="3">Кол-во за месяц</option>
+                                <option value="4">Кол-во за год</option>
+                            </select>
+                        </div>
+                        <div>
+                            Количество: <input id="count-inp" />
+                        </div>
+                        <div class="sub-div-2" style="display:none">
+                            Режим подсчета количества подходов: <input class="set-constraint-inp-2" type="checkbox" />
+                            <div class="min-set-input-2" style="display:none">
+                                Кол-во подходов: <input id="min-count-inp-2" />
+                            </div>
+                        </div>
+
+                        <div class="sub-div" style="display:none">
+                            Ограничение на кол-во за подход: <input class="set-constraint-inp" type="checkbox" />
+                            <div class="min-set-input" style="display:none">
+                                Мин. количество раз за подход: <input id="min-count-inp" />
+                            </div>
+                        </div>
+                        <div class="sub-div-3" style="display:none">
+                            Режим подсчета количества дней: <input class="set-constraint-inp-3" type="checkbox" />
+                            <div class="min-set-input-3" style="display:none">
+                                Кол-во дней: <input id="min-count-inp-3" />
+                            </div>
+                        </div>
+
+
+                        <input type="submit" value="добавить" />
+                        <input type="hidden" id="challengeId" value="@item.Id" />
+                    </form>
+
+                }
+
+
+                if (a1 == null)
+                {
+                    <div class="content1">
+                        <a class="check-in-btn" itemid="@item.Id" href="#">принять участие</a>
+                    </div>
+                }
+                <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
+
+                    @{
+
+                        foreach (var bb in item.Aims)
+                        {
+                            <div style="background-color:white; border-radius: 20px; padding:20px; margin-bottom:10px; border: 1px blue">
+                                @{
+                                    var zitem = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
+
+
+                                    switch (bb.Type)
+                                    {
+                                        case AimType.Max:
+                                            {
+                                                var target = bb.Count.Value;
+                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                {
+                                                    <div>@bb.Achievement.Name:  @target (max) </div>
+
+                                                }
+                                                else
+                                                {
+                                                    <a class="aim-info-btn" href="#">
+                                                        <div>@bb.Achievement.Name:  @target (max) </div>
+                                                    </a>
+                                                }
+                                            }
+                                            break;
+                                        case AimType.Min:
+                                            {
+                                                var target = bb.Count.Value;
+                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                {
+                                                    <div>@bb.Achievement.Name:  @target (min) </div>
+
+                                                }
+                                                else
+                                                {
+                                                    <a class="aim-info-btn" href="#">
+                                                        <div>@bb.Achievement.Name:  @target (min) </div>
+                                                    </a>
+                                                }
+                                            }
+                                            break;
+                                        case AimType.Count:
+                                            {
+                                                var target = bb.Count.Value;
+                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                {
+                                                    <div>@bb.Achievement.Name:  @target </div>
+
+                                                }
+                                                else
+                                                {
+                                                    <a class="aim-info-btn" href="#">
+                                                        <div>@bb.Achievement.Name:  @target </div>
+                                                    </a>
+                                                }
+                                            }
+                                            break;
+                                        case AimType.Bool:
+                                            if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                            {
+                                                <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
+
+                                            }
+                                            else
+                                            {
+                                                <a class="aim-info-btn" href="#">
+                                                    <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
+                                                </a>
+                                            }
+
+
+                                            break;
+
+                                    }
+                                    if (!string.IsNullOrEmpty(bb.Achievement.Description))
+                                    {
+
+                                        <div class="aimInfo" style="background-color: #aaaaff; border-radius: 20px; padding: 5px; color: white">
+                                            <p>@bb.Achievement.Description</p>
+                                        </div>
+                                    }
+                                    @if (item.OwnerId == user.Id)
+                                    {
+                                        <a class="delete-item-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
+                                    }
+                                }
+                            </div>
+
+
+
+                        }
+                    }
+                </div>
+
+                <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
+                    <h3>Требуемые испытания: </h3>
+                    @{
+                        @if (item.OwnerId == user.Id)
+                        {
+                            <form class="form4">
+                                <select>
+                                    @foreach (var aitem in ctx.Challenges.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
+                                    {
+                                        <option value="@aitem.Id">@aitem.Name</option>
+                                    }
+                                </select>
+
+                                <input type="submit" value="добавить" />
+                                <input type="hidden" id="challengeId" value="@item.Id" />
+                            </form>
+                        }
+                        var req1 = ctx.ChallengeRequirements.Where(z => z.Parent.Id == item.Id).Include(z => z.Child);
+                        foreach (var bb in req1)
+                        {
+
+                            var cid = bb.Child.Id;
+                            var req = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.Challenge.Id == cid);
+
+                            var str1 = "(не начато)";
+
+                            if (req != null)
+                            {
+                                var progress = "??? %";
+                                str1 = req.IsComplete ? "(завершено)" : "(не завершено) прогресс: " + progress;
+                            }
+                            <p>@bb.Child.Name @str1</p>
+                            @if (item.OwnerId == user.Id)
+                            {
+                                <a class="delete-req-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
+                            }
+                        }
+                    }
+                </div>
+            
+            }
+        </div>
+    }
+    }
+
+}
+

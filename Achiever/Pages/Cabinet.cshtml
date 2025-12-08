@@ -1,0 +1,1205 @@
+﻿@page
+@using Achiever.Model
+@using System.Linq;
+@using System.Text;
+@using Microsoft.EntityFrameworkCore;
+@using Newtonsoft;
+
+@model Achiever.Pages.CabinetModel
+@{
+    ViewData["Title"] = "Cabinet";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<h1>Личный кабинет</h1>
+
+
+
+
+@section Scripts {
+
+
+    <script>
+
+        async function loadAllBadges() {
+            const divs = document.querySelectorAll(".challenge-badge-div");
+            divs.forEach(async (d) => {
+                await fetch('/api/Cabinet/badge/' + d.getAttribute('challengeId'), {
+                    method: 'GET',
+                }).then((r) => {
+                    if (r.ok) {
+                        return r.text();
+                    } else {
+                        console.log(r.status);
+                        throw new Error('promise chain cancelled');
+                    }
+                }).then((r) => { d.innerHTML = r; });
+            });
+        }
+
+        $(document).ready(async function () {
+
+            await loadAllBadges();
+            async function acceptColors(cid, fore, back) {
+                if (!confirm('Вы уверены что хотите изменить цвет значка?')) return;
+
+                let item = {
+                    back: back,
+                    fore: fore,
+                    badgeId: parseInt(cid)
+                };
+                await fetch('/api/Challenge/badge_clrs', {
+                    method: 'PATCH',
+                    body: JSON.stringify(item),
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            }
+            $('.back-badge-clr-input').on('change', async function (ee) {
+
+                let fore = $(this).parent().parent().find('.fore-badge-clr-input').val();
+                let cid = $(this).attr('itemId');
+                let val = $(this).val();
+                ee.preventDefault();
+                await acceptColors(cid, fore, val);
+            });
+            $('.fore-badge-clr-input').on('change', async function (ee) {
+
+                let back = $(this).parent().parent().find('.back-badge-clr-input').val();
+                let cid = $(this).attr('itemId');
+                let val = $(this).val();
+                ee.preventDefault();
+                await acceptColors(cid, val, back);
+            });
+            $(".set-as-unlimited-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите сменить тип трекинга на: все время?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/tracking/' + cid + '/alltime', {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+            $(".set-as-warmup-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите сменить тип трекинга на: с принятия?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/tracking/' + cid + '/accept', {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".random-badge-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('Вы уверены что хотите сменить значок?'))
+                return;
+
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/badge_rnd/' + cid, {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+            $(".font-badge-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                let step = parseInt($(this).attr('step'));
+
+                if (!confirm('Вы уверены что хотите изменить шрифт?')) return;
+                let cid = $(this).attr('itemId');
+                let item = {
+                    step: step,
+                    badgeId: parseInt(cid)
+                };
+                await fetch('/api/Challenge/badge', {
+                    method: 'PATCH',
+                    body: JSON.stringify(item),
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".delete-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('удалить испытание целиком?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/' + cid, {
+                    method: 'DELETE',
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".leave-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('покинуть испытание?')) return;
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/leave/' + cid, {
+                    method: 'DELETE',
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+
+            $(".badge-btn").click(function () {
+                if ($(this).next(".badge-info-div").is(":visible")) {
+                    $(this).next(".badge-info-div").hide();
+                    return;
+                }
+                $(".badge-info-div").each(function () {
+                    $(this).hide();
+                });
+
+                $(this).next(".badge-info-div").toggle();
+            });
+            $('.svg-plus-btn').hover(function () {
+
+            });
+            $('.aimInfo').hide();
+
+            $('.aim-info-btn').click(function (e) {
+                $(this).next('.aimInfo').toggle();
+                e.preventDefault();
+            });
+
+            $('.add-btn').click(function (e) {
+                var aid = $(this).attr('achId');
+                console.log('aid: ' + aid);
+                console.log($(this).parent());
+                $(this).parent().children(".hide1-cls").toggle();
+                e.preventDefault();
+            });
+
+            $('.header1').click(function () {
+                var div1 = $(this).parent().parent().find('.content1');
+                div1.toggle();
+
+            });
+
+            $('.top-up-ok-btn').click(function (e) {
+                const uri = 'api/Default';
+                var aid = $(this).attr('achId');
+                var val = $(this).parent().children(":input").val();
+
+
+
+                /*fetch(uri)
+                    .then(response => response.json())
+                    .then(data => _displayItems(data))
+                    .catch(error => console.error('Unable to get items.', error));*/
+                let item = {
+                    achieveId: parseInt(aid),
+                    count: parseInt(val)
+                };
+                console.log(item);
+
+                $.ajax({
+                    type: "POST",
+                    url: uri,
+
+                    data: JSON.stringify(item),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        //location.reload();
+                        window.location.reload(true);
+                        //alert(data);
+                    },
+                    failure: function (errMsg) {
+                        //alert(errMsg);
+                    }
+                });
+
+                /*$.post(uri, JSON.stringify(item), function (data) {
+
+                    console.log('ok');
+                }).fail(function () {
+                    console.error("fail");
+                });*/
+                /*
+                fetch(uri, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(item)
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        //getItems();
+                        //addNameTextbox.value = '';
+                    })
+                    .catch(error => console.error('Unable to add item.', error));
+
+        */
+                e.preventDefault();
+
+
+            });
+
+            function float2int(value) {
+                return value | 0;
+            }
+
+            $('.top-up-doubled-ok-btn').click(function (e) {
+                const uri = 'api/Default/doubled';
+                var aid = $(this).attr('achId');
+                var val = $(this).parent().children(":input").val();
+                var val2 = $(this).parent().children(".val2").val();
+
+
+                /*fetch(uri)
+                    .then(response => response.json())
+                    .then(data => _displayItems(data))
+                    .catch(error => console.error('Unable to get items.', error));*/
+                let item = {
+                    achieveId: parseInt(aid),
+                    count: parseInt(val),
+                    count2: float2int(parseFloat(val2) * 100)
+                };
+                console.log(item);
+
+                $.ajax({
+                    type: "POST",
+                    url: uri,
+
+                    data: JSON.stringify(item),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        //location.reload();
+                        window.location.reload(true);
+                        //alert(data);
+                    },
+                    failure: function (errMsg) {
+                        //alert(errMsg);
+                    }
+                });
+
+
+                e.preventDefault();
+
+
+            });
+            $('.top-up-cancel-btn').click(function (e) {
+                $(this).parent().children(".hide1-cls").toggle();
+                e.preventDefault();
+
+            });
+        });
+    </script>
+
+
+
+    <script>
+
+        $(document).ready(function () {
+            $('.badge-btn').click(function (ee) {
+                ee.preventDefault();
+                const div = $("#badgeInfo");
+                var infoId = $(this).attr('infoId');
+                const lid = $(div).attr('lastInfoId');
+                if (lid == infoId && $(div).css('display') == 'block') {
+                    $(div).hide();
+                    return;
+                }
+
+                $(div).attr('lastInfoId', infoId);
+
+
+                const uri = 'api/Default';
+
+                $.ajax({
+                    type: "GET",
+                    url: uri + '/' + infoId,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        div.css('display', 'block');
+                        console.log(data);
+                        div.html('');
+                        let dat = new Date(data.compete);
+                        console.log('dat:' + dat);
+                        div.append('<p>Челендж: ' + data.name + '</p>');
+                        div.append('Время получения: ' + data.complete);
+                        for (i = 0; i < data.text.length; i++) {
+                            div.append("<div style='background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px'>" + data.text[i] + '</div>')
+                        }
+                    },
+                    failure: function (errMsg) {
+
+                    }
+                });
+
+
+            });
+
+
+        });
+    </script>
+}
+<style>
+    progress {
+        border: 1px solid black;
+        height: 20px;
+        border-radius: 10px;
+        background-color: white;
+        color: orange;
+    }
+
+        progress::-moz-progress-bar {
+            background: orange;
+            border-radius: 10px;
+        }
+
+        progress::-webkit-progress-value {
+            background: orange;
+            /*  border: 1px solid black;
+                                                                            height: 20px;*/
+            border-radius: 10px;
+        }
+
+
+        progress::-webkit-progress-bar {
+            background: white;
+            color: white;
+            border-radius: 10px;
+        }
+</style>
+
+@{
+    var ctx = new AchieverContext();
+    var user = Helper.GetUser(HttpContext.Session);
+
+}
+<div style="display:flex;flex-wrap:wrap">
+    <div style=" flex: 1 1 160px; padding: 10px">
+        <h3>@user.Name</h3>
+        <a href="#"><img src="#" width="200" height="200" /></a>
+    </div>
+    <div style="flex: 1 1 160px;">
+        @{
+            var ww1 = ctx.AchievementValueItems.Where(z => z.User.Id == user.Id).OrderBy(z => z.Timestamp);
+        }
+        @if (ww1.Any())
+        {
+            <text>
+                Вы занимаетесь: @((int)((DateTime.Now - ww1.First().Timestamp).TotalDays)) дней
+            </text>
+        }
+        else
+        {
+            <text> Вы занимаетесь: 0 дней  </text>
+        }
+        <br />
+        Подходов сделано: @(ctx.AchievementValueItems.Where(z => z.User.Id == user.Id).Count())
+        <br />
+
+
+    @*     @if (user.GoldUser)
+        {
+            <h3>Ваш тарифный план: полный доступ</h3>
+        }
+        else
+        {
+            <h3>Ваш тарифный план: помесячный (осталось дней: @user.PaidPeriod)</h3>
+            <br />
+            <a href="#">пополнить  </a>
+            <br />
+            <a href="#">купить полный доступ навсегда</a>
+            <br />
+            <text>
+                На бесплатном тарифе вы можете создать только.....
+            </text>
+        } *@
+    </div>
+</div>
+<h3>Значки</h3>
+@{
+
+    Helper.CheckAllChallenges(user.Id);
+
+
+    void RenderPath(int width, string fill)
+    {
+        var outp = $"M5,5 h{width} a5,5 0 0 1 5,5 v1 a5,5 0 0 1 -5,5 h-{width} a5,5 0 0 1 -5,-5 v-1 a5,5 0 0 1 5,-5 z";
+        <path d="@outp" fill="@fill" stroke="black" stroke-width="0.5" />
+    }
+
+
+    void RenderProgressBar(float percent, int width, string fill)
+    {
+        return;
+        var len = width * percent;
+
+        RenderPath(width, "none");
+        if (len > 10)
+        {
+            RenderPath((int)len, "orange");
+        }
+
+
+    }
+
+}
+@foreach (var item in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims))
+{
+
+    if (!item.IsComplete) continue;
+    var str1 = "";
+    if (item.CompleteTime != null)
+    {
+        str1 = item.CompleteTime.ToString();
+    }
+    StringBuilder st = new StringBuilder();
+    st.Append("Дата получения: " + str1);
+
+    foreach (var zitem in item.Challenge.Aims)
+    {
+        //var label = Helper.GetAimLabels(item, zitem, user);
+        var item1 = ctx.AchievementItems.SingleOrDefault(z => z.Id == zitem.AchievementId);
+        st.Append(item1.Name + " кол-во: " + zitem.Count + "&#10;");
+        //<div>@label.Title</div>
+    }
+
+    <a class="badge-btn" href="#" title="@st.ToString()" infoId="@item.Id">
+        <span class="challenge-badge-div" challengeId="@item.Challenge.Id"></span>
+        @{
+
+            //await Html.RenderPartialAsync("Badge", new Tuple<AchieverContext, Challenge>(ctx, item.Challenge));
+
+        }
+    </a>
+}
+
+
+
+@*<div id="badgeInfo" style="margin: 20px;padding:20px; display:none; background-color: aquamarine; border-radius: 20px">
+
+    </div>*@
+<div id="badgeInfo" style="border-radius: 20px;
+        background-color: azure;
+        display: none;
+        padding: 5px;
+        margin: 5px;
+        border: 1px solid;
+    ">
+</div>
+
+
+
+
+<div class="text-center">
+</div>
+<h3>Текущие челенджи</h3>
+
+
+
+@{
+
+    void RenderButtonPlus()
+    {
+        <svg class="svg-plus-btn" xmlns:dc="http://purl.org/dc/elements/1.1/"
+             xmlns:cc="http://creativecommons.org/ns#"
+             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:svg="http://www.w3.org/2000/svg"
+             xmlns="http://www.w3.org/2000/svg"
+             xmlns:xlink="http://www.w3.org/1999/xlink"
+             xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+             xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+             width="4.4465075mm"
+             height="4.4465075mm"
+             viewBox="0 0 29.92857 29.92857"
+             id="svg2"
+             version="1.1"
+             inkscape:version="0.91 r13725"
+             sodipodi:docname="plus1.svg">
+            <defs id="defs4">
+                <linearGradient inkscape:collect="always"
+                                id="linearGradient4170">
+                    <stop style="stop-color:#647ee7;stop-opacity:1;"
+                          offset="0"
+                          id="stop4172" />
+                    <stop style="stop-color:#647ee7;stop-opacity:0;"
+                          offset="1"
+                          id="stop4174" />
+                </linearGradient>
+                <radialGradient inkscape:collect="always"
+                                xlink:href="#linearGradient4170"
+                                id="radialGradient4178"
+                                cx="215.71428"
+                                cy="256.64792"
+                                fx="215.71428"
+                                fy="256.64792"
+                                r="47.642857"
+                                gradientUnits="userSpaceOnUse"
+                                gradientTransform="matrix(0.31409294,0,0,0.31409294,115.28137,143.35805)" />
+            </defs>
+            <sodipodi:namedview id="base"
+                                pagecolor="#ffffff"
+                                bordercolor="#666666"
+                                borderopacity="1.0"
+                                inkscape:pageopacity="0.0"
+                                inkscape:pageshadow="2"
+                                inkscape:zoom="7.9195959"
+                                inkscape:cx="12.405905"
+                                inkscape:cy="26.643679"
+                                inkscape:document-units="px"
+                                inkscape:current-layer="layer1"
+                                showgrid="false"
+                                fit-margin-top="0"
+                                fit-margin-left="0"
+                                fit-margin-right="0"
+                                fit-margin-bottom="0"
+                                inkscape:window-width="1920"
+                                inkscape:window-height="931"
+                                inkscape:window-x="1352"
+                                inkscape:window-y="-8"
+                                inkscape:window-maximized="1" />
+            <metadata id="metadata7">
+                <rdf:RDF>
+                    <cc:Work rdf:about="">
+                        <dc:format>image/svg+xml</dc:format>
+                        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+                        <dc:title />
+                    </cc:Work>
+                </rdf:RDF>
+            </metadata>
+            <g inkscape:label="Layer 1"
+               inkscape:groupmode="layer"
+               id="layer1"
+               transform="translate(-168.07142,-209.00506)">
+                <circle style="opacity:1;fill:#ff6600;fill-opacity:1;fill-rule:nonzero;stroke:url(#radialGradient4178);stroke-width:0.31409293;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                        id="path4136"
+                        cx="183.03571"
+                        cy="223.96935"
+                        r="14.807239" />
+                <rect style="opacity:1;fill:#ffeeaa;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                      id="rect4138"
+                      width="4.3085423"
+                      height="15.62272"
+                      x="181.06769"
+                      y="216.33948"
+                      ry="0" />
+                <rect style="opacity:1;fill:#ffeeaa;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+                      id="rect4138-0"
+                      width="4.5655689"
+                      height="15.370181"
+                      x="221.70856"
+                      y="-191.1938"
+                      ry="0"
+                      transform="matrix(0,1,-1,0,0,0)" />
+            </g>
+        </svg>
+    }
+    void RenderTopUpButton(int val, int achId)
+    {
+
+        <input class="hide1-cls" type="text" value="@val" style="display:none" />
+        <a class="top-up-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
+        <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
+    }
+    void RenderDoubleTopUpButton(int val, string val2, int achId)
+    {
+
+        <input class="hide1-cls val1" type="text" value="@val" style="display:none" />
+        <input class="hide1-cls val2" type="text" value="@val2" style="display:none" />
+        <a class="top-up-doubled-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
+        <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
+    }
+}
+
+
+@{
+
+
+
+    foreach (var chitem2 in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToList())
+    {
+        var chitem = chitem2.Challenge;
+        if (chitem2.IsComplete) continue;
+        TimeSpan? ts = null;
+        if (chitem.UntilDate != null)
+        {
+            ts = chitem.UntilDate.Value - DateTime.Now;
+        }
+
+        <a class="badge-btn" href="#">
+            <span class="challenge-badge-div" challengeId="@chitem2.Challenge.Id"></span>
+            @{
+                //await Html.RenderPartialAsync("Badge", new Tuple<AchieverContext, Challenge>(ctx, chitem));
+            }
+        </a>
+
+
+
+        <div class="badge-info-div" style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px; display: none">
+            @{
+                <h3><a href="#" class="header1">Челендж: @chitem.Name</a></h3>
+                @if (chitem2.Challenge.OwnerId == user.Id)
+                {
+                    <a style="padding:5px" class="delete-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">удалить челендж</a>
+                    <a style="padding:5px" class="random-badge-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">новый рандомный значок</a>
+                    <a style="padding:5px" class="font-badge-challenge-btn" step="-1" itemId="@chitem2.Challenge.Id" href="#">- размер текса</a>
+                    <a style="padding:5px" class="font-badge-challenge-btn" step="1" itemId="@chitem2.Challenge.Id" href="#">+ размер текса</a>
+                    <div>Цвет фона: <input class="back-badge-clr-input" value="@Helper.GetBackColor(chitem2.Challenge.BadgeSettings)" itemId="@chitem2.Challenge.Id" type="color" /></div>
+                    <div>Цвет текста: <input class="fore-badge-clr-input" value="@Helper.GetColor(chitem2.Challenge.BadgeSettings)" itemId="@chitem2.Challenge.Id" type="color" /></div>
+
+                    @if (chitem.UseValuesAfterStartOnly)
+                    {
+                        <a style="padding:5px" class="set-as-unlimited-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">безсрочный отсчет</a>
+                    }
+                    else
+                    {
+                        <a style="padding:5px" class="set-as-warmup-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">отсчет от старта</a>
+
+                    }
+                }
+
+                <a class="leave-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">покинуть челендж</a>
+                <div>
+                    Завершено: @(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%")
+                    <progress max="100" value="@((int)(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%") </progress>
+                </div>
+
+                <p>категории: #спорт, #english</p>
+
+
+                <div class="content1">
+                    @{
+                        //await Html.RenderPartialAsync("Badge", new Tuple<AchieverContext, Challenge>(ctx, chitem));
+
+
+                        var addstr1 = "";
+                        <p>
+                            Отсчет от:
+                            @if (chitem.UseValuesAfterStartOnly)
+                            {
+                                @(chitem2.StartTime.Value.ToLongDateString() + " " + chitem2.StartTime.Value.ToLongTimeString())
+
+                            }
+                            else
+                            {
+                                <text>за все время</text>
+                            }
+                        </p>
+                        if (ts != null)
+                        {
+                            addstr1 = $"осталось: {((int)ts.Value.TotalDays)} дней";
+                            <p>
+                                Идет до: @chitem.UntilDate.Value.ToLongDateString() @addstr1
+                            </p>
+                        }
+                        else
+                        {
+                            <p>
+                                Безсрочный челендж
+                            </p>
+                        }
+
+                    }
+                </div>
+
+
+
+
+                foreach (var bb in chitem.Aims)
+                {
+                    var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
+                    string clr = "#bbddff";
+                    bool achieved = Helper.IsAimAchieved(chitem2, bb, user);
+                    bool secondProgressBarEnabled = true;
+                    if (achieved)
+                    {
+                        clr = "#aaffaa";
+                    }
+                    <div class="content1" style="background-color: @clr; border-radius: 20px;padding:10px;margin:10px">
+
+                        @{
+
+
+                            var chlds = ctx.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+
+                            var aa = ctx.AchievementValueItems.Where(z => z.User.Id == user.Id &&
+                            (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && ((z.Timestamp > chitem2.StartTime.Value)
+                            || !chitem2.Challenge.UseValuesAfterStartOnly));
+
+                            //var bb = ctx.AchievementAimItems.FirstOrDefault(z => z.Achievement.Id == item.Id);
+
+
+                            if (bb == null)
+                            {
+                                throw new NotImplementedException();
+                                //<p>@item.Name: @cnt - цель не задана <a href="#">задать</a> </p>
+
+                                continue;
+                            }
+
+                            int target = bb.Count.Value;
+                            int target2 = bb.Count.Value;
+
+
+                            var cnstr = Helper.ExtractAimSettings(bb);
+                            var percnt = Helper.GetPercentOfAim(bb, chitem2);
+
+                            switch (bb.Type)
+                            {
+
+                                case AimType.Bool:
+                                    {
+                                        var addstr3 = "";
+                                        int cnt = 0;
+                                        int cnt11 = 0;
+
+                                        var addstr4 = "";
+                                        string addstr5 = "";
+                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date);
+                                        if (cnstr != null)
+                                        {
+                                            switch (cnstr.Period)
+                                            {
+                                                case PeriodTypeEnum.Year:
+                                                    {
+
+                                                        addstr3 = "за год";
+                                                        if (aa.Any())
+                                                        {
+                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
+
+
+                                                            addstr4 = fr.Key.ToString();
+                                                            cnt = fr.Sum(z => z.Count);
+                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            cnt11 = todays.Sum(z => z.Count);
+                                                        }
+                                                        else
+                                                        {
+
+                                                            addstr4 = "";
+                                                            cnt = 0;
+                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            cnt11 = todays.Sum(z => z.Count);
+                                                        }
+
+                                                    }
+                                                    break;
+                                                case PeriodTypeEnum.Month:
+                                                    {
+                                                        addstr3 = "за месяц";
+                                                        if (aa.Any())
+                                                        {
+                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count * Helper.GetModifier(u.Timestamp))).First();
+
+                                                            var split = fr.Key.Split(';').Select(int.Parse).ToArray();
+                                                            var dt = new DateTime(split[1], split[0], 1);
+
+                                                            addstr4 = dt.ToString("MMMM yyyy");
+                                                            cnt = (int)fr.Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
+                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            var rawCount = todays.Sum(z => z.Count);
+                                                            cnt11 = (int)todays.ToArray().Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
+                                                            var required = (int)Math.Ceiling(target2 / (float)DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+                                                            var diff = cnt11 - DateTime.Now.Day * required;
+                                                            var penalty = rawCount - cnt11;
+                                                            if (diff >= 0)
+                                                            {
+                                                                addstr5 = "опрежение +" + diff;
+                                                            }
+                                                            else
+                                                            {
+                                                                addstr5 = "отставание " + diff;
+                                                            }
+                                                            if (penalty > 0)
+                                                            {
+                                                                addstr5 += $" (штраф {penalty}) модификатор: x{Helper.GetModifier(DateTime.Now)}";
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            addstr4 = "";
+                                                            cnt = 0;
+                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            cnt11 = todays.Sum(z => z.Count);
+                                                        }
+
+                                                    }
+                                                    break;
+                                                case PeriodTypeEnum.Day:
+                                                    {
+                                                        addstr3 = "за день";
+                                                        if (cnstr.Times != null)
+                                                        {
+                                                            addstr3 = $"за день ({bb.Count.Value} повторений)";
+                                                            var lst = aa.ToList();
+                                                            if (cnstr.MinCountPerSet != null)
+                                                            {
+                                                                lst = aa.Where(z => z.Count >= cnstr.MinCountPerSet.Value).ToList();
+                                                                addstr3 += $" (мин. {cnstr.MinCountPerSet.Value} за подход)";
+                                                            }
+                                                            cnt = lst.GroupBy(z => z.Timestamp.Date).Where(z => z.Sum(u => u.Count) >= target).Count();
+                                                            target = cnstr.Times.Value;
+                                                            var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                            if (todays1.Any())
+                                                            {
+                                                                cnt11 = todays1.Sum(z => z.Count);
+                                                            }
+
+
+                                                            /*addstr3 = $"за подход ({bb.Count.Value} повторений)";
+                                                            target = cnstr.Times.Value;
+                                                            secondProgressBarEnabled = false;
+                                                            var lst = aa.Where(z => z.Count >= bb.Count).ToList();
+                                                            cnt = lst.Count;*/
+                                                            addstr3 += $" (требуется дней за все время: {cnstr.Times.Value})";
+                                                        }
+                                                        else if (cnstr.MinCountPerSet != null)
+                                                        {
+                                                            var lst = aa.Where(z => z.Count >= cnstr.MinCountPerSet.Value).ToList();
+                                                            if (lst.Any())
+                                                            {
+                                                                var fr = lst.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
+                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                                var lastOne = fr.OrderByDescending(z => z.Timestamp).First();
+                                                                addstr4 = lastOne.Timestamp.ToLongDateString() + " " + lastOne.Timestamp.ToLongTimeString();
+
+                                                                cnt = fr.Sum(z => z.Count);
+                                                                if (todays1.Any())
+                                                                {
+                                                                    cnt11 = todays1.Sum(z => z.Count);
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+
+                                                            }
+                                                            addstr3 += $" (мин. {cnstr.MinCountPerSet.Value} за подход)";
+                                                        }
+                                                        else
+                                                        {
+                                                            if (aa.Any())
+                                                            {
+                                                                var fr = aa.ToList().GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
+
+                                                                addstr4 = fr.Key.ToLongDateString();
+                                                                cnt = fr.Sum(z => z.Count);
+                                                                cnt11 = todays.Sum(z => z.Count);
+                                                            }
+                                                            else
+                                                            {
+
+                                                                addstr4 = "";
+                                                                cnt = 0;
+                                                                cnt11 = todays.Sum(z => z.Count);
+                                                            }
+                                                        }
+                                                    }
+                                                    break;
+                                                case PeriodTypeEnum.Set:
+                                                    {
+                                                        addstr3 = "за подход";
+                                                        if (cnstr.Times != null)
+                                                        {
+                                                            addstr3 = $"за подход ({bb.Count.Value} повторений)";
+                                                            target = cnstr.Times.Value;
+                                                            secondProgressBarEnabled = false;
+                                                            var lst = aa.Where(z => z.Count >= bb.Count).ToList();
+                                                            cnt = lst.Count;
+                                                            addstr3 += $" (требуется подходов за все время: {cnstr.Times.Value})";
+                                                        }
+                                                        else
+                                                        if (aa.Any())
+                                                        {
+                                                            var fr = aa.OrderByDescending(z => z.Count).First();
+
+
+                                                            addstr4 = fr.Timestamp.ToLongDateString() + " " + fr.Timestamp.ToLongTimeString();
+                                                            cnt = fr.Count;
+                                                            if (todays.Any())
+                                                            {
+                                                                cnt11 = todays.Max(z => z.Count);
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            addstr4 = "";
+                                                            cnt = 0;
+                                                            if (todays.Any())
+                                                            {
+                                                                cnt11 = todays.Max(z => z.Count);
+                                                            }
+                                                        }
+                                                    }
+
+                                                    break;
+                                                case PeriodTypeEnum.Whole:
+                                                    addstr3 = "за все время";
+                                                    if (aa.Any())
+                                                    {
+                                                        cnt = aa.Sum(z => z.Count);
+                                                        cnt11 = aa.Sum(z => z.Count);
+                                                    }
+                                                    else
+                                                    {
+                                                        cnt = 0;
+                                                        cnt11 = 0;
+                                                    }
+                                                    break;
+                                            }
+                                        }
+
+
+
+
+                                        bool done = false;
+                                        if (cnt > target)
+                                        {
+                                            cnt = target;
+                                            done = true;
+                                            <p>DONE!</p>
+
+                                        }
+                                        if (cnt11 > target2)
+                                        {
+                                            cnt11 = target2;
+                                        }
+                                        var percent = cnt / (float)target;
+                                        var percent11 = cnt11 / (float)target2;
+                                        var percent2 = Math.Round(percent * 100, 0);
+                                        var percent22 = Math.Round(percent11 * 100, 0);
+
+
+                                        <p>@item.Name @addstr3: @cnt / @target (@percent2%)  @addstr4</p>
+                                        if (!done)
+                                        {
+                                            <div style="width:100%">
+                                                <progress max="100" value="@((int)(percent * 100))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @percent % </progress>
+                                                @*<svg viewBox="0 4 315 17">
+            @{RenderProgressBar(percent, 300, "orange");}
+            </svg>*@
+                                            </div>
+                                            @if (!achieved && secondProgressBarEnabled)
+                                            {
+                                                string period = "За этот месяц";
+                                                if (cnstr != null && cnstr.Period == PeriodTypeEnum.Month)
+                                                {
+
+                                                }
+                                                else if (cnstr != null && cnstr.Period == PeriodTypeEnum.Year)
+                                                {
+                                                    period = "За этот год";
+                                                }
+                                                else
+                                                {
+                                                    period = "За сегодня";
+                                                }
+                                                string color = "green";
+                                                if (addstr5.Contains("-"))
+                                                {
+                                                    color = "red";
+                                                }
+                                                <p>@period: @cnt11 / @target2 (@percent22%) <span style="color: @color">@addstr5</span></p>
+                                                <div style="width:100%">
+                                                    <progress max="100" value="@((int)(percent11 * 100))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @percent11 % </progress>
+                                                    @*<svg viewBox="0 4 315 17">
+            <progress max="100" value="@((int)(percent11*100))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @percent11 % </progress>
+            @{RenderProgressBar(percent11, 300, "orange");}
+            </svg>*@
+                                                </div>
+                                            }
+                                        }
+                                        @if (!achieved)
+                                        {
+                                            <div>
+                                                <a href="#" achId="@item.Id" class="add-btn">
+                                                    @{
+                                                        RenderButtonPlus();
+                                                    }
+                                                    <span style="margin: 5px">добавить</span>
+                                                </a>
+
+                                                @{
+                                                    var ff = item.GetFeatures();
+                                                    if (ff != null && ff.IsDoubleValued)
+                                                    {
+                                                        RenderDoubleTopUpButton(0, "0.00", item.Id);
+                                                    }
+                                                    else
+                                                    {
+                                                        RenderTopUpButton(0, item.Id);
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    break;
+                                case AimType.Count:
+                                    {
+
+                                        int cnt = aa.Sum(z => z.Count);
+
+                                        if (cnt > target)
+                                        {
+                                            cnt = target;
+                                        }
+                                        var percent = cnt / (float)target;
+                                        var percent2 = Math.Round(percent * 100, 0);
+                                        var addstr2 = "";
+                                        if (ts != null)
+                                        {
+                                            addstr2 = $"осталось: {((int)ts.Value.TotalDays)} дней";
+                                        }
+                                        if (string.IsNullOrEmpty(item.Description))
+                                        {
+                                            <p>@item.Name: @cnt / @target (@percent2%) @addstr2</p>
+                                        }
+                                        else
+                                        {
+                                            <a class="aim-info-btn" href="#"><p>@item.Name: @cnt / @target (@percent2%) @addstr2</p></a>
+                                            <div class="aimInfo" style="background-color: #aaaaff; border-radius: 20px; padding: 5px; color: white">
+                                                <p>@item.Description</p>
+                                            </div>
+                                        }
+                                        @if (!achieved)
+                                        {
+                                            <div style="width:100%">
+                                                <progress max="100" value="@((int)(percent * 100))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @percent % </progress>
+                                                @*<svg viewBox="0 4 315 17">
+            @{ RenderProgressBar(percent, 300, "orange");}
+
+            </svg>*@
+                                            </div>
+                                        }
+                                        <div>
+                                            <a href="#" achId="@item.Id" class="add-btn">
+                                                @{
+                                                    RenderButtonPlus();
+                                                }
+                                                <span style="margin: 5px">добавить</span>
+                                            </a>
+
+
+                                            @{
+                                                var ff = item.GetFeatures();
+                                                if (ff != null && ff.IsDoubleValued)
+                                                {
+                                                    RenderDoubleTopUpButton(0, "0.00", item.Id);
+                                                }
+                                                else
+                                                {
+                                                    RenderTopUpButton(0, item.Id);
+                                                }
+                                            }
+                                        </div>
+
+                                    }
+                                    break;
+                                case AimType.Min:
+                                    {
+                                        <p>@item.Name:  @target (min)</p>
+
+                                    }
+                                    break;
+                                case AimType.Max:
+                                    {
+                                        <p>@item.Name:  @target (max)</p>
+
+                                    }
+                                    break;
+                            }
+
+
+                        }
+                    </div>
+
+                }
+                var req1 = ctx.ChallengeRequirements.Where(z => z.Parent.Id == chitem2.Challenge.Id).Include(z => z.Child);
+            }
+
+            @if (req1.Any())
+            {
+                <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
+                    <h3>Требуемые испытания: </h3>
+                    @{
+                        foreach (var bb in req1)
+                        {
+
+                            var cid = bb.Child.Id;
+                            var req = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.Challenge.Id == cid);
+
+
+                            var str1 = "(не начато)";
+
+                            if (req != null)
+                            {
+
+                                var perctot = Helper.GetPercentOfChallenge(req.ChallengeId, req.UserId);
+                                var progress = Math.Round(perctot * 100, 1) + "%";
+
+
+                                str1 = req.IsComplete ? "(завершено)" : "(не завершено) прогресс: " + progress;
+                                <p>
+                                    @bb.Child.Name @str1
+                                    <div style="width:100%">
+                                        <progress max="100" value="@((int)(perctot * 100))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @perctot % </progress>
+                                        @*<svg viewBox="0 4 315 17">
+                @{RenderProgressBar((float)perctot, 300, "orange"); }
+                </svg>*@
+                                    </div>
+                                </p>
+                            }
+                            else
+                            {
+                                <p>@bb.Child.Name @str1</p>
+                            }
+
+                        }
+                    }
+                </div>
+            }
+        </div>
+
+    }
+
+
+
+}
+

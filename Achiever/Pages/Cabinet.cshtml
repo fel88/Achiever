@@ -792,7 +792,7 @@
 
                                         var addstr4 = "";
                                         string addstr5 = "";
-                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date);
+                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
                                         if (cnstr != null)
                                         {
                                             switch (cnstr.Period)
@@ -808,7 +808,7 @@
 
                                                             addstr4 = fr.Key.ToString();
                                                             cnt = fr.Sum(z => z.Count);
-                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                                             cnt11 = todays.Sum(z => z.Count);
                                                         }
                                                         else
@@ -816,7 +816,7 @@
 
                                                             addstr4 = "";
                                                             cnt = 0;
-                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                                             cnt11 = todays.Sum(z => z.Count);
                                                         }
 
@@ -834,7 +834,7 @@
 
                                                             addstr4 = dt.ToString("MMMM yyyy");
                                                             cnt = (int)fr.Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
-                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                                             var rawCount = todays.Sum(z => z.Count);
                                                             cnt11 = (int)todays.ToArray().Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
                                                             var required = (int)Math.Ceiling(target2 / (float)DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
@@ -857,7 +857,7 @@
                                                         {
                                                             addstr4 = "";
                                                             cnt = 0;
-                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                                             cnt11 = todays.Sum(z => z.Count);
                                                         }
 
@@ -877,7 +877,7 @@
                                                             }
                                                             cnt = lst.GroupBy(z => z.Timestamp.Date).Where(z => z.Sum(u => u.Count) >= target).Count();
                                                             target = cnstr.Times.Value;
-                                                            var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                            var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
                                                             if (todays1.Any())
                                                             {
                                                                 cnt11 = todays1.Sum(z => z.Count);
@@ -897,7 +897,7 @@
                                                             if (lst.Any())
                                                             {
                                                                 var fr = lst.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
                                                                 var lastOne = fr.OrderByDescending(z => z.Timestamp).First();
                                                                 addstr4 = lastOne.Timestamp.ToLongDateString() + " " + lastOne.Timestamp.ToLongTimeString();
 

@@ -8,10 +8,13 @@
     ViewData["Title"] = "Log";
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
+@section Head {
 
-@section Scripts{
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+}
+@section Scripts {
     <script>
-
 
 
         async function fetchLog(period) {
@@ -76,7 +79,7 @@
                                             )
                                             .append($('<a>')
                                                 .attr('class', 'edit-time-prop-ok')
-                                                .attr('itemId', item.id) 
+                                                .attr('itemId', item.id)
                                                 .attr('doubled', item.doubled)
                                                 .attr('href', '#')
                                                 .text('ок')
@@ -419,12 +422,29 @@
         }
         $(document).ready(async function () {
             fetchLog('today');
+                    //create Tabulator on DOM element with id "example-table"
+        var table = new Tabulator("#example-table", {
+            height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+            data:tabledata, //assign data to table
+            layout:"fitColumns", //fit columns to width of table (optional)
+            columns:[ //Define Table Columns
+                {title:"Name", field:"name", width:150},
+                {title:"Age", field:"age", hozAlign:"left", formatter:"progress"},
+                {title:"Favourite Color", field:"col"},
+                {title:"Date Of Birth", field:"dob", sorter:"date", hozAlign:"center"},
+            ],
+        });
 
+        //trigger an alert message when the row is clicked
+        table.on("rowClick", function(e, row){
+            alert("Row " + row.getData().id + " Clicked!!!!");
+        });
 
         });
     </script>
 }
 <h1>Log</h1>
+<div id="example-table"></div>
 <style>
     .time-input {
         width: 30px

@@ -23,7 +23,12 @@ namespace Achiever.Telegram
             foreach (var item in doc.Descendants("setting"))
             {
                 var nm = item.Attribute("name").Value;
-                var vl = item.Attribute("value").Value;
+                string vl = null;
+                if (item.Attribute("value") != null)
+                    vl = item.Attribute("value").Value;
+                else
+                    vl = item.Value;
+
                 switch (nm)
                 {
                     case "apiKey":

@@ -1,5 +1,9 @@
 ﻿using Achiever.Controllers;
+using Achiever.Telegram;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Options;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -28,11 +32,47 @@ namespace Achiever.Model
         public DbSet<PenaltyItem> Penalties { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+        {   // ... other model configurations
+
+            var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+                v => v.ToUniversalTime(),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+            var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? v.Value.ToUniversalTime() : v,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(dateTimeConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(nullableDateTimeConverter);
+                    }
+                }
+            }
             base.OnModelCreating(modelBuilder);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite("Data Source=achiever.db");
+        {
+            var dbProvider = ConfigLoader.ReadSetting("dbProvider");
+            var connectionString = ConfigLoader.ReadSetting("dbConnectionString");
+            if (dbProvider == "postgres")
+            {                
+                options.UseNpgsql(connectionString);
+            }
+            else
+            {
+                options.UseSqlite(connectionString ?? "Data Source=achiever.db");
+            }
+
+        }
     }
+
 }

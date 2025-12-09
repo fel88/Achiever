@@ -142,7 +142,7 @@ namespace Achiever
                         int cnt11 = 0;
 
                         var addstr4 = "";
-                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date);
+                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
                         if (cnstr != null)
                         {
                             switch (cnstr.Period)
@@ -158,7 +158,7 @@ namespace Achiever
 
                                             addstr4 = fr.Key.ToString();
                                             cnt = fr.Sum(z => z.Count);
-                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                             cnt11 = todays.Sum(z => z.Count);
                                         }
                                         else
@@ -166,7 +166,7 @@ namespace Achiever
 
                                             addstr4 = "";
                                             cnt = 0;
-                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                             cnt11 = todays.Sum(z => z.Count);
                                         }
 
@@ -186,14 +186,14 @@ namespace Achiever
 
                                             addstr4 = dt.ToString("MMMM yyyy");
                                             cnt = fr.Sum(z => z.Count);
-                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                             cnt11 = todays.Sum(z => z.Count);
                                         }
                                         else
                                         {
                                             addstr4 = "";
                                             cnt = 0;
-                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                             cnt11 = todays.Sum(z => z.Count);
                                         }
 
@@ -210,7 +210,7 @@ namespace Achiever
                                             if (lst.Any())
                                             {
                                                 var fr = lst.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
                                                 var lastOne = fr.OrderByDescending(z => z.Timestamp).First();
                                                 addstr4 = lastOne.Timestamp.ToLongDateString() + " " + lastOne.Timestamp.ToLongTimeString();
 
@@ -469,7 +469,7 @@ namespace Achiever
 
         public static double GetProgressLastDay(UserChallengeInfo chitem2)
         {
-            var nw = DateTime.Now.Date;
+            var nw = DateTime.UtcNow.Date;
 
             var p = GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId, nw);
             var p2 = GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId);
@@ -479,7 +479,7 @@ namespace Achiever
 
         public static double GetProgressLastDay(ChallengeAimItem aim, UserChallengeInfo uci)
         {
-            var nw = DateTime.Now.Date;
+            var nw = DateTime.UtcNow.Date;
 
             var p = GetPercentOfAim(aim, uci, nw);
             var p2 = GetPercentOfAim(aim, uci);

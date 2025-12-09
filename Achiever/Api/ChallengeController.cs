@@ -230,7 +230,7 @@ namespace Achiever.Api
             {
                 UserId = user.Id,
                 ChallengeId = id,
-                StartTime = DateTime.Now
+                StartTime = DateTime.UtcNow
             });
 
             await ctx.SaveChangesAsync();

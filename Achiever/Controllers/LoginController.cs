@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Achiever.Dtos;
 using Achiever.Model;
+using Achiever.Telegram;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,9 +41,10 @@ namespace Achiever.Controllers
             User f = null;
             foreach (var item in ctx.Users.ToArray())
             {
-                if (!Request.IsLocal())                
-                    if (item.Login == "local_admin")
-                        continue;                
+                //if (!Request.IsLocal())                
+                if (item.Login == "local_admin")
+                    if (ConfigLoader.ReadBoolSetting("allowLocalAdmin") != true)
+                        continue;
 
                 if (item.Login == user.login && ComputeSha256Hash(user.password).ToLower() == item.Password.ToLower())
                 {
@@ -72,5 +74,5 @@ namespace Achiever.Controllers
             return Redirect("/Login");
         }
     }
-  
+
 }

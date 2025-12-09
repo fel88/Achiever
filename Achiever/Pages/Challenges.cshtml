@@ -17,7 +17,7 @@
     <h2>Дневник достижений</h2>
 </div>
 
-@section Scripts{
+@section Scripts {
     <script>
         $(document).ready(function () {
 
@@ -457,225 +457,228 @@
     <h2>Открытые челенджы:</h2>
     for (int round = 0; round < 2; round++)
     {
-        if(round==1){
-           <h2>Ваши активные челенджы </h2>
+        if (round == 1)
+        {
+            <h2>Ваши активные челенджы </h2>
         }
-    foreach (var item in ctx.Challenges.Include(z => z.Aims))
-    {
-        if (!(item.OwnerId == null || item.OwnerId == user.Id)) continue;
-        var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
-        if (round==0 && a1 != null)
-            continue;
+        foreach (var item in ctx.Challenges.Include(z => z.Aims).ToArray())
+        {
+            if (!(item.OwnerId == null || item.OwnerId == user.Id))
+                continue;
 
-        if (round==1 && a1 == null)
-            continue;
+            var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
+            if (round == 0 && a1 != null)
+                continue;
 
-
-        <div style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
-            @{
-
-                <h3><a href="#" class="header1">Челендж: @item.Name </a></h3>
-
-                @if (item.OwnerId == user.Id)
-                {
-                    <a class="delete-challenge-btn" itemId="@item.Id" href="#">удалить челендж</a>
-                    <a class="random-badge-challenge-btn" itemId="@item.Id" href="#">новый рандомный значок</a>
-                    <a class="add-item-btn" href="#">+ добавить упражнение</a>
-                    <form class="form3">
-                        <select>
-                            @foreach (var aitem in ctx.AchievementItems.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
-                            {
-                                <option value="@aitem.Id">@aitem.Name</option>
-                            }
-                        </select>
-                        <div>
-                            Тип упражнения:
-                            <select class="type-inp">
-                                <option value="0">Суммарное количество</option>
-                                <option value="1">Кол-во за подход</option>
-                                <option value="2">Кол-во за день (+минимум за подход)</option>
-                                <option value="3">Кол-во за месяц</option>
-                                <option value="4">Кол-во за год</option>
-                            </select>
-                        </div>
-                        <div>
-                            Количество: <input id="count-inp" />
-                        </div>
-                        <div class="sub-div-2" style="display:none">
-                            Режим подсчета количества подходов: <input class="set-constraint-inp-2" type="checkbox" />
-                            <div class="min-set-input-2" style="display:none">
-                                Кол-во подходов: <input id="min-count-inp-2" />
-                            </div>
-                        </div>
-
-                        <div class="sub-div" style="display:none">
-                            Ограничение на кол-во за подход: <input class="set-constraint-inp" type="checkbox" />
-                            <div class="min-set-input" style="display:none">
-                                Мин. количество раз за подход: <input id="min-count-inp" />
-                            </div>
-                        </div>
-                        <div class="sub-div-3" style="display:none">
-                            Режим подсчета количества дней: <input class="set-constraint-inp-3" type="checkbox" />
-                            <div class="min-set-input-3" style="display:none">
-                                Кол-во дней: <input id="min-count-inp-3" />
-                            </div>
-                        </div>
+            if (round == 1 && a1 == null)
+                continue;
 
 
-                        <input type="submit" value="добавить" />
-                        <input type="hidden" id="challengeId" value="@item.Id" />
-                    </form>
+            <div style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
+                @{
 
-                }
+                    <h3><a href="#" class="header1">Челендж: @item.Name </a></h3>
 
-
-                if (a1 == null)
-                {
-                    <div class="content1">
-                        <a class="check-in-btn" itemid="@item.Id" href="#">принять участие</a>
-                    </div>
-                }
-                <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
-
-                    @{
-
-                        foreach (var bb in item.Aims)
-                        {
-                            <div style="background-color:white; border-radius: 20px; padding:20px; margin-bottom:10px; border: 1px blue">
-                                @{
-                                    var zitem = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
-
-
-                                    switch (bb.Type)
-                                    {
-                                        case AimType.Max:
-                                            {
-                                                var target = bb.Count.Value;
-                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
-                                                {
-                                                    <div>@bb.Achievement.Name:  @target (max) </div>
-
-                                                }
-                                                else
-                                                {
-                                                    <a class="aim-info-btn" href="#">
-                                                        <div>@bb.Achievement.Name:  @target (max) </div>
-                                                    </a>
-                                                }
-                                            }
-                                            break;
-                                        case AimType.Min:
-                                            {
-                                                var target = bb.Count.Value;
-                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
-                                                {
-                                                    <div>@bb.Achievement.Name:  @target (min) </div>
-
-                                                }
-                                                else
-                                                {
-                                                    <a class="aim-info-btn" href="#">
-                                                        <div>@bb.Achievement.Name:  @target (min) </div>
-                                                    </a>
-                                                }
-                                            }
-                                            break;
-                                        case AimType.Count:
-                                            {
-                                                var target = bb.Count.Value;
-                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
-                                                {
-                                                    <div>@bb.Achievement.Name:  @target </div>
-
-                                                }
-                                                else
-                                                {
-                                                    <a class="aim-info-btn" href="#">
-                                                        <div>@bb.Achievement.Name:  @target </div>
-                                                    </a>
-                                                }
-                                            }
-                                            break;
-                                        case AimType.Bool:
-                                            if (string.IsNullOrEmpty(bb.Achievement.Description))
-                                            {
-                                                <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
-
-                                            }
-                                            else
-                                            {
-                                                <a class="aim-info-btn" href="#">
-                                                    <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
-                                                </a>
-                                            }
-
-
-                                            break;
-
-                                    }
-                                    if (!string.IsNullOrEmpty(bb.Achievement.Description))
-                                    {
-
-                                        <div class="aimInfo" style="background-color: #aaaaff; border-radius: 20px; padding: 5px; color: white">
-                                            <p>@bb.Achievement.Description</p>
-                                        </div>
-                                    }
-                                    @if (item.OwnerId == user.Id)
-                                    {
-                                        <a class="delete-item-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
-                                    }
+                    @if (item.OwnerId == user.Id)
+                    {
+                        <a class="delete-challenge-btn" itemId="@item.Id" href="#">удалить челендж</a>
+                        <a class="random-badge-challenge-btn" itemId="@item.Id" href="#">новый рандомный значок</a>
+                        <a class="add-item-btn" href="#">+ добавить упражнение</a>
+                        <form class="form3">
+                            <select>
+                                @foreach (var aitem in ctx.AchievementItems.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
+                                {
+                                    <option value="@aitem.Id">@aitem.Name</option>
                                 }
+                            </select>
+                            <div>
+                                Тип упражнения:
+                                <select class="type-inp">
+                                    <option value="0">Суммарное количество</option>
+                                    <option value="1">Кол-во за подход</option>
+                                    <option value="2">Кол-во за день (+минимум за подход)</option>
+                                    <option value="3">Кол-во за месяц</option>
+                                    <option value="4">Кол-во за год</option>
+                                </select>
+                            </div>
+                            <div>
+                                Количество: <input id="count-inp" />
+                            </div>
+                            <div class="sub-div-2" style="display:none">
+                                Режим подсчета количества подходов: <input class="set-constraint-inp-2" type="checkbox" />
+                                <div class="min-set-input-2" style="display:none">
+                                    Кол-во подходов: <input id="min-count-inp-2" />
+                                </div>
+                            </div>
+
+                            <div class="sub-div" style="display:none">
+                                Ограничение на кол-во за подход: <input class="set-constraint-inp" type="checkbox" />
+                                <div class="min-set-input" style="display:none">
+                                    Мин. количество раз за подход: <input id="min-count-inp" />
+                                </div>
+                            </div>
+                            <div class="sub-div-3" style="display:none">
+                                Режим подсчета количества дней: <input class="set-constraint-inp-3" type="checkbox" />
+                                <div class="min-set-input-3" style="display:none">
+                                    Кол-во дней: <input id="min-count-inp-3" />
+                                </div>
                             </div>
 
 
+                            <input type="submit" value="добавить" />
+                            <input type="hidden" id="challengeId" value="@item.Id" />
+                        </form>
 
-                        }
                     }
-                </div>
 
-                <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
-                    <h3>Требуемые испытания: </h3>
-                    @{
-                        @if (item.OwnerId == user.Id)
-                        {
-                            <form class="form4">
-                                <select>
-                                    @foreach (var aitem in ctx.Challenges.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
-                                    {
-                                        <option value="@aitem.Id">@aitem.Name</option>
-                                    }
-                                </select>
 
-                                <input type="submit" value="добавить" />
-                                <input type="hidden" id="challengeId" value="@item.Id" />
-                            </form>
-                        }
-                        var req1 = ctx.ChallengeRequirements.Where(z => z.Parent.Id == item.Id).Include(z => z.Child);
-                        foreach (var bb in req1)
-                        {
+                    if (a1 == null)
+                    {
+                        <div class="content1">
+                            <a class="check-in-btn" itemid="@item.Id" href="#">принять участие</a>
+                        </div>
+                    }
+                    <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
 
-                            var cid = bb.Child.Id;
-                            var req = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.Challenge.Id == cid);
+                        @{
 
-                            var str1 = "(не начато)";
-
-                            if (req != null)
+                            foreach (var bb in item.Aims)
                             {
-                                var progress = "??? %";
-                                str1 = req.IsComplete ? "(завершено)" : "(не завершено) прогресс: " + progress;
+                                <div style="background-color:white; border-radius: 20px; padding:20px; margin-bottom:10px; border: 1px blue">
+                                    @{
+                                        var zitem = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
+
+
+                                        switch (bb.Type)
+                                        {
+                                            case AimType.Max:
+                                                {
+                                                    var target = bb.Count.Value;
+                                                    if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                    {
+                                                        <div>@bb.Achievement.Name:  @target (max) </div>
+
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="aim-info-btn" href="#">
+                                                            <div>@bb.Achievement.Name:  @target (max) </div>
+                                                        </a>
+                                                    }
+                                                }
+                                                break;
+                                            case AimType.Min:
+                                                {
+                                                    var target = bb.Count.Value;
+                                                    if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                    {
+                                                        <div>@bb.Achievement.Name:  @target (min) </div>
+
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="aim-info-btn" href="#">
+                                                            <div>@bb.Achievement.Name:  @target (min) </div>
+                                                        </a>
+                                                    }
+                                                }
+                                                break;
+                                            case AimType.Count:
+                                                {
+                                                    var target = bb.Count.Value;
+                                                    if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                    {
+                                                        <div>@bb.Achievement.Name:  @target </div>
+
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="aim-info-btn" href="#">
+                                                            <div>@bb.Achievement.Name:  @target </div>
+                                                        </a>
+                                                    }
+                                                }
+                                                break;
+                                            case AimType.Bool:
+                                                if (string.IsNullOrEmpty(bb.Achievement.Description))
+                                                {
+                                                    <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
+
+                                                }
+                                                else
+                                                {
+                                                    <a class="aim-info-btn" href="#">
+                                                        <div>@bb.Achievement.Name:  (достигнуть однажды)</div>
+                                                    </a>
+                                                }
+
+
+                                                break;
+
+                                        }
+                                        if (!string.IsNullOrEmpty(bb.Achievement.Description))
+                                        {
+
+                                            <div class="aimInfo" style="background-color: #aaaaff; border-radius: 20px; padding: 5px; color: white">
+                                                <p>@bb.Achievement.Description</p>
+                                            </div>
+                                        }
+                                        @if (item.OwnerId == user.Id)
+                                        {
+                                            <a class="delete-item-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
+                                        }
+                                    }
+                                </div>
+
+
+
                             }
-                            <p>@bb.Child.Name @str1</p>
+                        }
+                    </div>
+
+                    <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
+                        <h3>Требуемые испытания: </h3>
+                        @{
                             @if (item.OwnerId == user.Id)
                             {
-                                <a class="delete-req-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
+                                <form class="form4">
+                                    <select>
+                                        @foreach (var aitem in ctx.Challenges.Where(z => z.OwnerId == null || z.OwnerId == user.Id))
+                                        {
+                                            <option value="@aitem.Id">@aitem.Name</option>
+                                        }
+                                    </select>
+
+                                    <input type="submit" value="добавить" />
+                                    <input type="hidden" id="challengeId" value="@item.Id" />
+                                </form>
+                            }
+                            var req1 = ctx.ChallengeRequirements.Where(z => z.Parent.Id == item.Id).Include(z => z.Child);
+                            foreach (var bb in req1)
+                            {
+
+                                var cid = bb.Child.Id;
+                                var req = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.Challenge.Id == cid);
+
+                                var str1 = "(не начато)";
+
+                                if (req != null)
+                                {
+                                    var progress = "??? %";
+                                    str1 = req.IsComplete ? "(завершено)" : "(не завершено) прогресс: " + progress;
+                                }
+                                <p>@bb.Child.Name @str1</p>
+                                @if (item.OwnerId == user.Id)
+                                {
+                                    <a class="delete-req-btn" challengeId="@item.Id" itemId="@bb.Id" href="#">удалить</a>
+                                }
                             }
                         }
-                    }
-                </div>
-            
-            }
-        </div>
-    }
+                    </div>
+
+                }
+            </div>
+        }
     }
 
 }

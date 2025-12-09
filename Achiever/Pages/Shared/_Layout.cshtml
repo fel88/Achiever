@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/fonts.css" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @RenderSection("Head", required: false)
+
     <script>
         $(document).ready(function () {
             $(".logout").click(function () {

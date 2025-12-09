@@ -17,6 +17,7 @@ namespace Achiever.Model
         public int PaidPeriod { get; set; }
         public bool GoldUser { get; set; }
         public bool Enabled { get; set; }
+        public string XmlConfig { get; set; }
         public long? TelegramChatId { get; set; }
     }
 }

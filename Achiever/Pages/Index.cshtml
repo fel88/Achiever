@@ -348,7 +348,7 @@
                                         int cnt11 = 0;
 
                                         var addstr4 = "";
-                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date);
+                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
                                         if (cnstr != null)
                                         {
                                             switch (cnstr.Period)
@@ -364,7 +364,7 @@
                                                             if (lst.Any())
                                                             {
                                                                 fr = lst.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.Now.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
+                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
                                                                 var lastOne = fr.OrderByDescending(z => z.Timestamp).First();
                                                                 addstr4 = lastOne.Timestamp.ToLongDateString() + " " + lastOne.Timestamp.ToLongTimeString();
 

@@ -130,23 +130,23 @@ namespace Achiever.Api
 
             if (period == "today")
             {
-                filter = filter.Where(z => z.Timestamp.Date == DateTime.Now.Date);
-                filterd = filterd.Where(z => z.Timestamp.Date == DateTime.Now.Date);
+                filter = filter.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
+                filterd = filterd.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
             }
             if (period == "yesterday")
             {
-                filter = filter.Where(z => z.Timestamp.Date == DateTime.Now.Date.AddDays(-1));
-                filterd = filterd.Where(z => z.Timestamp.Date == DateTime.Now.Date.AddDays(-1));
+                filter = filter.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date.AddDays(-1));
+                filterd = filterd.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date.AddDays(-1));
             }
             if (period == "year")
             {
-                filter = filter.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
-                filterd = filterd.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+                filter = filter.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
+                filterd = filterd.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
             }
             if (period == "month")
             {
-                filter = filter.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year && z.Timestamp.Date.Month == DateTime.Now.Date.Month);
-                filterd = filterd.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year && z.Timestamp.Date.Month == DateTime.Now.Date.Month);
+                filter = filter.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year && z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month);
+                filterd = filterd.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year && z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month);
             }
 
             filter = filter
@@ -162,10 +162,10 @@ namespace Achiever.Api
 
             if (period == "week")
             {
-                filter2 = filter2.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year &&
-                GetIso8601WeekOfYear(z.Timestamp.Date) == GetIso8601WeekOfYear(DateTime.Now.Date)).ToArray();
-                filter2d = filter2d.Where(z => z.Timestamp.Date.Year == DateTime.Now.Date.Year &&
-              GetIso8601WeekOfYear(z.Timestamp.Date) == GetIso8601WeekOfYear(DateTime.Now.Date)).ToArray();
+                filter2 = filter2.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year &&
+                GetIso8601WeekOfYear(z.Timestamp.Date) == GetIso8601WeekOfYear(DateTime.UtcNow.Date)).ToArray();
+                filter2d = filter2d.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year &&
+              GetIso8601WeekOfYear(z.Timestamp.Date) == GetIso8601WeekOfYear(DateTime.UtcNow.Date)).ToArray();
             }
 
             foreach (var item in filter2)

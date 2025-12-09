@@ -52,7 +52,7 @@ namespace Achiever.Telegram
 
             var aa = context.AchievementValueItems.Where(z => z.User.Id == user.Id && z.Achievement.Id == aId.Value);
 
-            var todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.Now.Date.Month && z.Timestamp.Date.Year == DateTime.Now.Date.Year);
+            var todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
             var cnt11 = todays.Sum(z => z.Count);
 
             var a = context.AchievementItems.Single(z => z.Id == aId.Value);

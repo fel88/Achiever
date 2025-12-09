@@ -7,7 +7,7 @@ namespace Achiever
 {
     public class Program
     {
-        static TelegramBotService bot = new TelegramBotService();
+        public static TelegramBotService bot = new TelegramBotService();
 
         public static void Main(string[] args)
         {

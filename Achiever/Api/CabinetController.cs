@@ -22,7 +22,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Find(id);
             if (ch == null)
             {

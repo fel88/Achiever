@@ -57,6 +57,7 @@ namespace Achiever.Telegram
                 Console.WriteLine("apiKey is empty. You shall not pass!");
                 return;
             }
+            Console.WriteLine("[Telegram bot] starting..");
 
             botClient = new TelegramBotClient(apiKey);
             using CancellationTokenSource cts = new();
@@ -92,7 +93,7 @@ namespace Achiever.Telegram
                 return;
             var chatId = message.Chat.Id;
 
-            AchieverContext ctx = new AchieverContext();
+            AchieverContext ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Users.FirstOrDefault(z => z.TelegramChatId == chatId);
             foreach (var cc in ctx.Users)
             {

@@ -20,7 +20,7 @@ namespace Achiever.Controllers
         [Route("{infoId}")]
         public async Task<ActionResult<UserInfoDto>> GetInfo(int infoId)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
 
             var sng = await context.UserChallengeInfos.Include(z => z.Challenge).Include(z => z.Challenge.Aims).SingleOrDefaultAsync(z => z.Id == infoId);
             List<string> ss = new List<string>();
@@ -28,7 +28,7 @@ namespace Achiever.Controllers
             {
                 var item1 = context.AchievementItems.SingleOrDefault(z => z.Id == item.AchievementId);
                 var user = Helper.GetUser(HttpContext.Session);
-                var ret = Helper.GetAimLabels(sng, item, user);
+                var ret = Helper.GetAimLabels(context, sng, item, user);
                 //ss.Add(item1.Name + " - кол-во: " + item.Count);
                 ss.Add(ret.Title);
             }
@@ -46,7 +46,7 @@ namespace Achiever.Controllers
         [HttpPost]
         public async Task<IActionResult> AddActivity(ActivityAddDto activityAddDto)//AchievementItem achive, [FromQuery] int count
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
 
             var user = Helper.GetUser(HttpContext.Session);
             if (user == null)
@@ -75,7 +75,7 @@ namespace Achiever.Controllers
         [HttpPost("/api/[controller]/doubled")]
         public async Task<IActionResult> AddDoubledActivity(ActivityDoubledAddDto activityAddDto)//AchievementItem achive, [FromQuery] int count
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
 
             var user = Helper.GetUser(HttpContext.Session);
             if (user == null)

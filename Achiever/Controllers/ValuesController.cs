@@ -20,7 +20,7 @@ namespace Achiever.Controllers
     {
         public object GetDayReport(int monthId, int yearId, int id)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
             var user = Helper.GetUser(HttpContext.Session);
 
             var aa = context.AchievementValueItems.Include(z => z.User).Where(z =>
@@ -50,7 +50,7 @@ namespace Achiever.Controllers
         }
         public object GetMonthReport(int yearId, int id)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
             var user = Helper.GetUser(HttpContext.Session);
 
             var aa = context.AchievementValueItems.Include(z => z.User).Where(z =>
@@ -81,7 +81,7 @@ namespace Achiever.Controllers
 
         public object GetYearReport(int id)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
             var user = Helper.GetUser(HttpContext.Session);
 
             var aa = context.AchievementValueItems.Include(z => z.User).Where(z =>

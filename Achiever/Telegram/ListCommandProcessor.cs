@@ -29,7 +29,7 @@ namespace Achiever.Telegram
             {
                 cnt = int.Parse(spl[1]);
             }
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
 
             var user = context.Users.First(z => z.TelegramChatId == service.ChatId);
             var tt = context.AchievementValueItems.Where(z => z.User.Id == user.Id).Include(z => z.Achievement).OrderByDescending(z => z.Timestamp).Take(cnt).ToArray();

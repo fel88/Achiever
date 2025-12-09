@@ -52,7 +52,7 @@ namespace Achiever.Api
             {
                 doubleValued = Request.Form["doubled"] == "on";
             }
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
 
             List<string> flist = new List<string>();
             if (singular)
@@ -177,7 +177,7 @@ namespace Achiever.Api
 
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var chl = ctx.Challenges.Find(cid);
             chl.Aims.Add(new ChallengeAimItem()
             {
@@ -205,7 +205,7 @@ namespace Achiever.Api
             var iid = int.Parse(obj["itemId"].ToString());
 
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var chl = ctx.Challenges.Find(cid);
             ctx.ChallengeRequirements.Add(new ChallengeRequirement()
             {
@@ -226,7 +226,7 @@ namespace Achiever.Api
             }
 
             var user = Helper.GetUser(HttpContext.Session);
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             ctx.UserChallengeInfos.Add(new UserChallengeInfo()
             {
                 UserId = user.Id,
@@ -247,7 +247,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var fr = ctx.AchievementItems.Find(id);
             ctx.AchievementItems.Remove(fr);
             await ctx.SaveChangesAsync();
@@ -263,7 +263,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var fr = ctx.Challenges.Find(chId);
 
             var user = Helper.GetUser(HttpContext.Session);
@@ -284,7 +284,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var fr = ctx.Challenges.Find(chId);
 
             var user = Helper.GetUser(HttpContext.Session);
@@ -305,7 +305,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
             var user = Helper.GetUser(HttpContext.Session);
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
 
             var cnt = ctx.Challenges.Count(z => z.OwnerId == user.Id);
 
@@ -348,7 +348,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Include(z => z.Aims).SingleOrDefault(z => z.Id == id);
 
             if (type == "alltime")
@@ -420,7 +420,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Include(z => z.Aims).SingleOrDefault(z => z.Id == dto.BadgeId);
 
 
@@ -466,7 +466,7 @@ namespace Achiever.Api
             }
             if (dto.Fore == null || dto.Back == null) return BadRequest();
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Include(z => z.Aims).SingleOrDefault(z => z.Id == dto.BadgeId);
 
 
@@ -498,7 +498,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Include(z => z.Aims).SingleOrDefault(z => z.Id == id);
 
             var clr1 = Color.FromArgb(r.Next(255), r.Next(255), r.Next(255));
@@ -545,7 +545,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Include(z => z.Aims).SingleOrDefault(z => z.Id == id);
             var huser = Helper.GetUser(HttpContext.Session);
             var user = ctx.Users.Find(huser.Id);
@@ -570,7 +570,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Challenges.Find(id);
             var huser = Helper.GetUser(HttpContext.Session);
             var user = ctx.Users.Find(huser.Id);

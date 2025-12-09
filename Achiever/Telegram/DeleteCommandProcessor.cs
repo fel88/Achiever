@@ -21,7 +21,7 @@ namespace Achiever.Telegram
 
             var spl = message.ToLower().Split(new char[] { ' ' }).ToArray();
 
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
             var user = context.Users.First(z => z.TelegramChatId == service.ChatId);
 
             //var user = context.Users.First();

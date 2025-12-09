@@ -11,7 +11,7 @@
 
 @{
 
-    var ctx = new AchieverContext();
+    var ctx = AchieverContextHolder.GetContext();
     var user = Helper.GetUser(HttpContext.Session);
 }
 @section Scripts{

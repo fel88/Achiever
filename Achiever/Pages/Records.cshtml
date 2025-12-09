@@ -313,7 +313,7 @@
     <a class="record-btn " id="month-btn" href="#"> Месячный максимум</a>
     <a class="record-btn " id="year-btn" href="#"> Годовой максимум</a>
     @{
-        var context = new AchieverContext();
+        var context = AchieverContextHolder.GetContext();
         var user = Helper.GetUser(HttpContext.Session);
 
         var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);

@@ -451,7 +451,7 @@
 </div>
 
 @{
-    var ctx = new AchieverContext();
+    var ctx = AchieverContextHolder.GetContext();
 
     var user = Helper.GetUser(HttpContext.Session);
 
@@ -655,7 +655,7 @@
                                 </form>
                             }
                             var req1 = ctx.ChallengeRequirements.Where(z => z.Parent.Id == item.Id).Include(z => z.Child);
-                            foreach (var bb in req1)
+                            foreach (var bb in req1.ToArray())
                             {
 
                                 var cid = bb.Child.Id;

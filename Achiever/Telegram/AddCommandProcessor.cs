@@ -24,7 +24,7 @@ namespace Achiever.Telegram
             var ach = spl[1];
             var cnt = int.Parse(spl[2]);
             StringBuilder sb = new StringBuilder();
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
             var user = context.Users.First(z => z.TelegramChatId == service.ChatId);
 
             //var user = context.Users.First();

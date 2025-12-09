@@ -26,7 +26,7 @@ namespace Achiever.Api
             {
                 return Unauthorized();
             }
-            var ctx = new AchieverContext();
+                using var ctx = AchieverContextHolder.GetContext();
 
             ctx.Users.Add(new User()
             {
@@ -54,7 +54,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.Users.Find(id);
             ctx.Users.Remove(ch);
             await ctx.SaveChangesAsync();

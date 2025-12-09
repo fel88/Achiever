@@ -47,7 +47,7 @@
     }
 @{
 
-    var ctx = new AchieverContext();
+    var ctx = AchieverContextHolder.GetContext();
 
     var user = Helper.GetUser(HttpContext.Session);
     foreach (var chitem2 in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToList())
@@ -63,7 +63,7 @@
         foreach (var bb in item.Aims)
         {
             var ach = ctx.AchievementItems.Find(bb.AchievementId);
-            var pld = Helper.GetProgressLastDay(bb, a1);
+            var pld = Helper.GetProgressLastDay(ctx, bb, a1);
             if (pld <= 0)
                 continue;
             has = true;
@@ -85,8 +85,8 @@
 
                 @{
 
-                    var pld1 = Helper.GetProgressLastDay(chitem2);
-                    var curnp = Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId);
+                    var pld1 = Helper.GetProgressLastDay(ctx, chitem2);
+                    var curnp = Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId);
 
                     <h3>@item.Name (@(Math.Round(curnp * 100, 1))%) +@(Math.Round(pld1 * 100, 1))%</h3>
                     foreach (var bb in item.Aims)
@@ -94,7 +94,7 @@
                         var ach = ctx.AchievementItems.Find(bb.AchievementId);
                         var cnstr = Helper.ExtractAimSettings(bb);
 
-                        var pld = Helper.GetProgressLastDay(bb, a1);
+                        var pld = Helper.GetProgressLastDay(ctx, bb, a1);
                         if (pld <= 0)
                             continue;
 
@@ -103,7 +103,7 @@
                         {
                             period = $"({cnstr.Period})";
                         }
-                        var curnp1 = Helper.GetPercentOfAim(bb, a1);
+                        var curnp1 = Helper.GetPercentOfAim(ctx, bb, a1);
 
                         <div style="background-color:white; border-radius: 5px; padding:5px; margin-bottom:10px; border: 1px blue">
                             @{

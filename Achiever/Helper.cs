@@ -16,14 +16,10 @@ namespace Achiever
     public class Helper
     {
         
-
-        
-
-        public static decimal GetModifier(DateTime time)
-        {
-            AchieverContext ctx = new AchieverContext();
+        public static decimal GetModifier(DateTime time, AchieverContext ctx)
+        {            
             decimal ret = 1;
-            foreach (var item in ctx.Penalties.Include(z => z.Achievement))
+            foreach (var item in ctx.Penalties.Include(z => z.Achievement).ToArray())
             {
                 var achId = item.Achievement.Id;
                 var ww = ctx.AchievementValueItems.Where(z => z.Achievement.Id == achId).ToArray();
@@ -44,7 +40,7 @@ namespace Achiever
 
         public static bool IsComplete(int chId, int userId)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
             var user = context.Users.Find(userId);
 
             var userInfos = context.UserChallengeInfos.Where(z => z.ChallengeId == chId && userId == z.UserId).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray();
@@ -58,7 +54,7 @@ namespace Achiever
             
             foreach (var aim in item.Challenge.Aims)
             {
-                bool compl = Helper.IsAimAchieved(item, aim, user);
+                bool compl = Helper.IsAimAchieved(context, item, aim, user);
 
                 if (!compl)
                 {
@@ -77,7 +73,7 @@ namespace Achiever
         }
         public static async void CheckAllChallenges(int userId)
         {
-            AchieverContext context = new AchieverContext();
+            AchieverContext context = AchieverContextHolder.GetContext();
             var user = context.Users.Find(userId);
             foreach (var item in context.UserChallengeInfos.Where(z => !z.IsComplete && z.User.Id == userId).Include(z => z.Challenge).Include(z => z.Challenge.Aims))
             {
@@ -95,13 +91,11 @@ namespace Achiever
             public string Title;
         }
 
-        public static AimLabels GetAimLabels(UserChallengeInfo chitem2, ChallengeAimItem bb, User user)
+        public static AimLabels GetAimLabels(AchieverContext ctx, UserChallengeInfo chitem2, ChallengeAimItem bb, User user)
         {
-
-            var ctx = new AchieverContext();
             var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
             string clr = "#bbddff";
-            bool achieved = Helper.IsAimAchieved(chitem2, bb, user);
+            bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
             bool secondProgressBarEnabled = true;
 
 
@@ -123,15 +117,12 @@ namespace Achiever
             {
                 throw new NotImplementedException();
                 //<p>@item.Name: @cnt - цель не задана <a href="#">задать</a> </p>
-
-
             }
 
             int target = bb.Count.Value;
 
-
             var cnstr = Helper.ExtractAimSettings(bb);
-            var percnt = Helper.GetPercentOfAim(bb, chitem2);
+            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
             AimLabels ret = new AimLabels();
             switch (bb.Type)
             {
@@ -356,9 +347,9 @@ namespace Achiever
             }
             return ret;
         }
-        public static bool IsAimAchieved(UserChallengeInfo info, ChallengeAimItem aim, User user)
-        {
-            var context = new AchieverContext();
+
+        public static bool IsAimAchieved(AchieverContext context, UserChallengeInfo info, ChallengeAimItem aim, User user)
+        {            
             //var aa = context.AchievementValueItems.Where(z => z.User.Id == user.Id && aim.AchievementId == z.Achievement.Id);
 
             var chlds = context.AchievementItems.Where(z => z.Parent.Id == aim.AchievementId).Select(z => z.Id).ToArray();
@@ -407,7 +398,7 @@ namespace Achiever
                                         var ww1 = context.AchievementValueItems.Where(z => z.User.Id == user.Id && ((z.Timestamp >
                                        info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly) && z.Achievement.Id == aim.AchievementId).
                                        ToArray().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).ToArray();
-                                        if (ww1.Any(z => z.Sum(u => u.Count * GetModifier(u.Timestamp)) >= aim.Count))
+                                        if (ww1.Any(z => z.Sum(u => u.Count * GetModifier(u.Timestamp, context)) >= aim.Count))
                                             return true;
                                     }
                                     break;
@@ -468,22 +459,22 @@ namespace Achiever
             return false;
         }
 
-        public static double GetProgressLastDay(UserChallengeInfo chitem2)
+        public static double GetProgressLastDay(AchieverContext ctx, UserChallengeInfo chitem2)
         {
             var nw = DateTime.UtcNow.Date;
 
-            var p = GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId, nw);
-            var p2 = GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId);
+            var p = GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId, nw);
+            var p2 = GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId);
 
             return p2 - p;
         }
 
-        public static double GetProgressLastDay(ChallengeAimItem aim, UserChallengeInfo uci)
+        public static double GetProgressLastDay(AchieverContext ctx, ChallengeAimItem aim, UserChallengeInfo uci)
         {
             var nw = DateTime.UtcNow.Date;
 
-            var p = GetPercentOfAim(aim, uci, nw);
-            var p2 = GetPercentOfAim(aim, uci);
+            var p = GetPercentOfAim(ctx, aim, uci, nw);
+            var p2 = GetPercentOfAim(ctx, aim, uci);
             return p2 - p;
         }
 
@@ -508,9 +499,8 @@ namespace Achiever
             return s.GetObject<User>("user");
         }
 
-        public static double GetPercentOfChallenge(int chId, int userId, DateTime? lastFilter = null)
-        {
-            var ctx = new AchieverContext();
+        public static double GetPercentOfChallenge(AchieverContext ctx, int chId, int userId, DateTime? lastFilter = null)
+        {            
             if (!ctx.UserChallengeInfos.Any(z => z.UserId == userId && z.ChallengeId == chId))
                 return 0;
 
@@ -519,7 +509,7 @@ namespace Achiever
 
             foreach (var item in chitem2.Challenge.Aims)
             {
-                perctot += Helper.GetPercentOfAim(item, chitem2, lastFilter);
+                perctot += Helper.GetPercentOfAim(ctx, item, chitem2, lastFilter);
             }
             var ar1 = ctx.ChallengeRequirements.Include(z => z.Parent).Include(z => z.Child).Where(z => z.Parent.Id == chitem2.ChallengeId).ToArray();
             foreach (var item in ar1)
@@ -528,7 +518,7 @@ namespace Achiever
                 if (fr == null)
                     continue;
 
-                perctot += GetPercentOfChallenge(fr.ChallengeId, fr.UserId, lastFilter);
+                perctot += GetPercentOfChallenge(ctx, fr.ChallengeId, fr.UserId, lastFilter);
             }
 
             perctot /= (chitem2.Challenge.Aims.Count + ar1.Length);
@@ -537,10 +527,9 @@ namespace Achiever
             return perctot;
         }
 
-        public static double GetPercentOfAim(ChallengeAimItem bb, UserChallengeInfo chitem2, DateTime? lastFilter = null)
+        public static double GetPercentOfAim(AchieverContext ctx, ChallengeAimItem bb, UserChallengeInfo chitem2, DateTime? lastFilter = null)
         {
-            int target = bb.Count.Value;
-            var ctx = new AchieverContext();
+            int target = bb.Count.Value;            
 
             /*var aa = ctx.AchievementValueItems.Where(z =>
             z.User.Id == chitem2.UserId &&

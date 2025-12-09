@@ -27,7 +27,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            using var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.AchievementValueItems.Find(id);
             ctx.AchievementValueItems.Remove(ch);
             await ctx.SaveChangesAsync();
@@ -44,7 +44,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             if (bool.Parse(dto.doubled))
             {
                 var ch = ctx.DoubleAchievementValueItems.Find(id);
@@ -67,7 +67,7 @@ namespace Achiever.Api
             if (!Helper.IsAuthorized(HttpContext.Session))
                 return Unauthorized();
 
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
             var cnt = context.AchievementValueItems.Count();
             return new JsonResult(new ValueDto() { value = ((cnt / qtyPerPage) + 1).ToString() });
         }
@@ -80,9 +80,9 @@ namespace Achiever.Api
                 return Unauthorized();
             }
             var user = Helper.GetUser(HttpContext.Session);
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
             var ret = new List<LogDto>();
-            foreach (var item in context.AchievementValueItems.Where(z => z.User.Id == user.Id).Include(z => z.Achievement).OrderByDescending(z => z.Timestamp))
+            foreach (var item in context.AchievementValueItems.Where(z => z.User.Id == user.Id).Include(z => z.Achievement).OrderByDescending(z => z.Timestamp).ToArray())
             {
                 ret.Add(new LogDto()
                 {
@@ -91,7 +91,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp) * item.Count)
+                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
                 });
             }
             return new JsonResult(new { items = ret, names = context.AchievementItems.Select(z => new { name = z.Name, id = z.Id }) });
@@ -121,7 +121,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
             var user = Helper.GetUser(HttpContext.Session);
-            var context = new AchieverContext();
+            var context = AchieverContextHolder.GetContext();
             var ret = new List<LogDto>();
             var filter = context.AchievementValueItems
                 .Where(z => z.User.Id == user.Id);
@@ -178,7 +178,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp) * item.Count)
+                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
                 });
             }
             foreach (var item in filter2d)
@@ -192,7 +192,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp) * item.Count)
+                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
                 });
             }
             return new JsonResult(new { items = ret, names = context.AchievementItems.Select(z => new { name = z.Name, id = z.Id }) });
@@ -206,7 +206,7 @@ namespace Achiever.Api
                 return Unauthorized();
             }
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             var ch = ctx.AchievementValueItems.Find(id);
             ch.Description = dto.desc;
 

@@ -408,7 +408,7 @@
 </style>
 
 @{
-    var ctx = new AchieverContext();
+    var ctx = AchieverContextHolder.GetContext();
     var user = Helper.GetUser(HttpContext.Session);
 
 }
@@ -482,7 +482,7 @@
     }
 
 }
-@foreach (var item in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims))
+@foreach (var item in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray())
 {
 
     if (!item.IsComplete) continue;
@@ -494,7 +494,7 @@
     StringBuilder st = new StringBuilder();
     st.Append("Дата получения: " + str1);
 
-    foreach (var zitem in item.Challenge.Aims)
+    foreach (var zitem in item.Challenge.Aims.ToArray())
     {
         //var label = Helper.GetAimLabels(item, zitem, user);
         var item1 = ctx.AchievementItems.SingleOrDefault(z => z.Id == zitem.AchievementId);
@@ -698,8 +698,8 @@
 
                 <a class="leave-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">покинуть челендж</a>
                 <div>
-                    Завершено: @(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%")
-                    <progress max="100" value="@((int)(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%") </progress>
+                    Завершено: @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%")
+                    <progress max="100" value="@((int)(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%") </progress>
                 </div>
 
                 <p>категории: #спорт, #english</p>
@@ -742,12 +742,11 @@
 
 
 
-
                 foreach (var bb in chitem.Aims)
                 {
                     var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
                     string clr = "#bbddff";
-                    bool achieved = Helper.IsAimAchieved(chitem2, bb, user);
+                    bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
                     bool secondProgressBarEnabled = true;
                     if (achieved)
                     {
@@ -780,7 +779,7 @@
 
 
                             var cnstr = Helper.ExtractAimSettings(bb);
-                            var percnt = Helper.GetPercentOfAim(bb, chitem2);
+                            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
 
                             switch (bb.Type)
                             {
@@ -828,18 +827,18 @@
                                                         addstr3 = "за месяц";
                                                         if (aa.Any())
                                                         {
-                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count * Helper.GetModifier(u.Timestamp))).First();
+                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count * Helper.GetModifier(u.Timestamp, ctx))).First();
 
                                                             var split = fr.Key.Split(';').Select(int.Parse).ToArray();
                                                             var dt = new DateTime(split[1], split[0], 1);
 
                                                             addstr4 = dt.ToString("MMMM yyyy");
-                                                            cnt = (int)fr.Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
+                                                            cnt = (int)fr.Sum(z => z.Count * Helper.GetModifier(z.Timestamp, ctx));
                                                             todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
                                                             var rawCount = todays.Sum(z => z.Count);
-                                                            cnt11 = (int)todays.ToArray().Sum(z => z.Count * Helper.GetModifier(z.Timestamp));
-                                                            var required = (int)Math.Ceiling(target2 / (float)DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
-                                                            var diff = cnt11 - DateTime.Now.Day * required;
+                                                            cnt11 = (int)todays.ToArray().Sum(z => z.Count * Helper.GetModifier(z.Timestamp, ctx));
+                                                            var required = (int)Math.Ceiling(target2 / (float)DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month));
+                                                            var diff = cnt11 - DateTime.UtcNow.Day * required;
                                                             var penalty = rawCount - cnt11;
                                                             if (diff >= 0)
                                                             {
@@ -851,7 +850,7 @@
                                                             }
                                                             if (penalty > 0)
                                                             {
-                                                                addstr5 += $" (штраф {penalty}) модификатор: x{Helper.GetModifier(DateTime.Now)}";
+                                                                addstr5 += $" (штраф {penalty}) модификатор: x{Helper.GetModifier(DateTime.UtcNow, ctx)}";
                                                             }
                                                         }
                                                         else
@@ -1160,19 +1159,17 @@
                 <div class="content1" style="background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px">
                     <h3>Требуемые испытания: </h3>
                     @{
-                        foreach (var bb in req1)
+                        foreach (var bb in req1.ToArray())
                         {
 
                             var cid = bb.Child.Id;
                             var req = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.Challenge.Id == cid);
 
-
                             var str1 = "(не начато)";
 
                             if (req != null)
                             {
-
-                                var perctot = Helper.GetPercentOfChallenge(req.ChallengeId, req.UserId);
+                                var perctot = Helper.GetPercentOfChallenge(ctx, req.ChallengeId, req.UserId);
                                 var progress = Math.Round(perctot * 100, 1) + "%";
 
 

@@ -508,7 +508,7 @@
         </div>
     }
 
-    var context = new AchieverContext();
+    var context = AchieverContextHolder.GetContext();
     var user = Helper.GetUser(HttpContext.Session);
 
     <button onclick="getTodayLog()">today</button>

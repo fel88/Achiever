@@ -62,6 +62,8 @@ namespace Achiever.Common.Model
         {
             var dbProvider = ConfigLoader.ReadSetting("dbProvider");
             var connectionString = ConfigLoader.ReadSetting("dbConnectionString");
+            Console.WriteLine("dbProvider: " + dbProvider);
+            Console.WriteLine("connectionString: " + connectionString);
             if (dbProvider == "postgres")
             {                
                 options.UseNpgsql(connectionString);
@@ -73,5 +75,4 @@ namespace Achiever.Common.Model
 
         }
     }
-
 }

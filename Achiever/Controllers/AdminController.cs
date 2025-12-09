@@ -19,8 +19,11 @@ namespace Achiever.Controllers
     {
         [HttpGet("/api/[controller]/backup")]
         public IActionResult Backup()
-        {
-            try
+		{
+			if (!Helper.IsAuthorized(HttpContext.Session))			
+				return Unauthorized();
+            
+			try
             {
 
                 return PhysicalFile(Path.Combine(Startup.RootPath, "..", "achiever.db"), "application/octet-stream", "achiever_backup.db");
@@ -46,7 +49,7 @@ namespace Achiever.Controllers
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.Challenges.Find(id);
             uu.OwnerId = null;
@@ -57,14 +60,13 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/aim/owner/reset/{id}")]
         public async Task<IActionResult> ResetAimOwner(int id)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.AchievementItems.Find(id);
             uu.OwnerId = null;
@@ -75,14 +77,13 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/user/enabled/switch/{id}")]
         public async Task<IActionResult> UserEnabledSwitch(int id)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.Users.Find(id);
             uu.Enabled = !uu.Enabled;
@@ -93,15 +94,14 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/challenge/owner/set/{id}/{ownerId}")]
         public async Task<IActionResult> SetChallengeOwner(int id, int ownerId)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             var user2 = ctx.Users.Find(ownerId);
             if (user2 == null) return BadRequest();
 
@@ -114,15 +114,14 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/subAchievement/parent/set/{aId}/{parentId}")]
         public async Task<IActionResult> SetAchievementItemParent(int aId, int parentId)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin)
                 return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.AchievementItems.Find(aId);
             uu.Parent = ctx.AchievementItems.Find(parentId);
@@ -133,15 +132,14 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/aim/owner/set/{id}/{ownerId}")]
         public async Task<IActionResult> SetAimOwner(int id, int ownerId)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
             var user2 = ctx.Users.Find(ownerId);
             if (user2 == null) return BadRequest();
 
@@ -155,14 +153,13 @@ namespace Achiever.Controllers
         [HttpPatch("/api/[controller]/user/gold/{id}/{val}")]
         public async Task<IActionResult> ChangeUserGoldStatus(int id, int val)
         {
-            if (!Helper.IsAuthorized(HttpContext.Session))
-            {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
                 return Unauthorized();
-            }
+            
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.Users.Find(id);
             uu.GoldUser = val == 1;
@@ -181,7 +178,7 @@ namespace Achiever.Controllers
             var user = Helper.GetUser(HttpContext.Session);
             if (!user.IsAdmin) return Unauthorized();
 
-            var ctx = new AchieverContext();
+            var ctx = AchieverContextHolder.GetContext();
 
             var uu = ctx.Challenges.Find(dto.itemId);
             if (string.IsNullOrEmpty(dto.value)) return BadRequest();

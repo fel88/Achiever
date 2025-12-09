@@ -233,7 +233,7 @@
 
 
 @{
-    var ctx = new AchieverContext();
+    var ctx = AchieverContextHolder.GetContext();
     var user = Helper.GetUser(HttpContext.Session);
     Helper.CheckAllChallenges(user.Id);
 
@@ -275,7 +275,7 @@
         <div class="badge-info-div" style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px; display: none">
             @{
                 <h3><a href="#" class="header1">Челендж: @chitem.Name</a></h3>
-                <div>Завершено: @(Math.Round(Helper.GetPercentOfChallenge(chitem2.ChallengeId,chitem2.UserId) * 100, 1) + "%")</div>
+                <div>Завершено: @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId,chitem2.UserId) * 100, 1) + "%")</div>
                 <p>категории: #спорт, #english</p>
 
 
@@ -303,13 +303,11 @@
                 </div>
 
 
-
-
                 foreach (var bb in chitem.Aims)
                 {
                     var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
                     string clr = "#bbddff";
-                    bool achieved = Helper.IsAimAchieved(chitem2, bb, user);
+                    bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
                     if (achieved)
                     {
                         clr = "#aaffaa";
@@ -337,7 +335,7 @@
 
 
                             var cnstr = Helper.ExtractAimSettings(bb);
-                            var percnt = Helper.GetPercentOfAim(bb, chitem2);
+                            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
 
                             switch (bb.Type)
                             {
@@ -553,7 +551,7 @@
                             if (req != null)
                             {
 
-                                var perctot = Helper.GetPercentOfChallenge(req.ChallengeId,req.UserId);
+                                var perctot = Helper.GetPercentOfChallenge(ctx, req.ChallengeId,req.UserId);
                                 var progress = Math.Round(perctot * 100, 1) + "%";
 
 

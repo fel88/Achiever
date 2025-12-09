@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Achiever.Migrations
+namespace Achiever.Common.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -25,6 +25,7 @@ namespace Achiever.Migrations
                     PaidPeriod = table.Column<int>(type: "INTEGER", nullable: false),
                     GoldUser = table.Column<bool>(type: "INTEGER", nullable: false),
                     Enabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    XmlConfig = table.Column<string>(type: "TEXT", nullable: true),
                     TelegramChatId = table.Column<long>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>

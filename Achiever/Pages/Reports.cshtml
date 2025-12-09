@@ -54,7 +54,7 @@
     }
 </style>
 @{
-    var context = new AchieverContext();
+    var context = AchieverContextHolder.GetContext();
     var user = Helper.GetUser(HttpContext.Session);
     <div>
         <p>Период времени:</p>

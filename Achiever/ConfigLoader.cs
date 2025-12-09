@@ -2,7 +2,7 @@
 using System.IO;
 using System.Xml.Linq;
 
-namespace Achiever.Telegram
+namespace Achiever
 {
     public static class ConfigLoader
     {

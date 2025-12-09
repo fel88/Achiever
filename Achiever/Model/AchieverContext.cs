@@ -1,5 +1,4 @@
 ﻿using Achiever.Controllers;
-using Achiever.Telegram;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;

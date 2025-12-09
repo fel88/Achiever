@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Achiever.Dtos;
 using Achiever.Model;
-using Achiever.Telegram;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

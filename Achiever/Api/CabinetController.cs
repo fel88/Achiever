@@ -2,6 +2,7 @@
 using Achiever.Controllers;
 using Achiever.Model;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ namespace Achiever.Api
             }
 
             using var ctx = AchieverContextHolder.GetContext();
+            Console.WriteLine("db path:" + ctx.GetDatabaseFilePath());
+
             var ch = ctx.Challenges.Find(id);
             if (ch == null)
             {

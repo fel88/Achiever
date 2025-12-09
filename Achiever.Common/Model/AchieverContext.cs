@@ -1,4 +1,5 @@
 ﻿using Achiever.Model;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
@@ -19,7 +20,40 @@ namespace Achiever.Common.Model
                 SaveChanges();
             }
         }
+        public string GetDatabaseFilePath()
+        {
+            // Get the current database connection
+            var connection = Database.GetDbConnection();
 
+            // If the connection is a SqliteConnection, extract the DataSource
+            if (connection is SqliteConnection sqliteConnection)
+            {
+                // The DataSource property contains the path from the connection string
+                string dataSource = sqliteConnection.DataSource;
+
+                // SQLite treats paths relative to the current working directory. 
+                // To get the absolute path, combine it with the application base directory if it's relative.
+                if (!Path.IsPathRooted(dataSource) && !dataSource.StartsWith("|DataDirectory|"))
+                {
+                    // This logic helps resolve the actual path at runtime
+                    var basePath = AppDomain.CurrentDomain.BaseDirectory;
+                    return Path.GetFullPath(Path.Combine(basePath, dataSource));
+                }
+                else if (dataSource.StartsWith("|DataDirectory|"))
+                {
+                    // Handle |DataDirectory| substitution string
+                    string dataDirectory = AppDomain.CurrentDomain.GetData("DataDirectory") as string;
+                    if (!string.IsNullOrEmpty(dataDirectory))
+                    {
+                        return Path.GetFullPath(Path.Combine(dataDirectory, dataSource.Replace("|DataDirectory|", "")));
+                    }
+                }
+
+                return dataSource;
+            }
+
+            return "Not a SQLite connection or path not found.";
+        }
         public DbSet<User> Users { get; set; }
         public DbSet<AchievementItem> AchievementItems { get; set; }
         public DbSet<AchievementValueItem> AchievementValueItems { get; set; }
@@ -65,7 +99,7 @@ namespace Achiever.Common.Model
             Console.WriteLine("dbProvider: " + dbProvider);
             Console.WriteLine("connectionString: " + connectionString);
             if (dbProvider == "postgres")
-            {                
+            {
                 options.UseNpgsql(connectionString);
             }
             else

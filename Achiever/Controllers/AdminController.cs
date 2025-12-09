@@ -25,8 +25,10 @@ namespace Achiever.Controllers
             
 			try
             {
-
-                return PhysicalFile(Path.Combine(Startup.RootPath, "..", "achiever.db"), "application/octet-stream", "achiever_backup.db");
+                var ctx = AchieverContextHolder.GetContext();
+                return PhysicalFile(ctx.GetDatabaseFilePath(), "application/octet-stream", "achiever_backup.db"); 
+                //return PhysicalFile(Path.Combine(Startup.RootPath, "..", "achiever.db"), "application/octet-stream", "achiever_backup.db");
+                
             }
             catch (Exception ex)
             {

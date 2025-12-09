@@ -81,7 +81,7 @@ namespace Achiever.Controllers
 				{
 					return BadRequest(new { code = 2, message = "disabled user" });
 				}
-				if (Program.bot != null && f.TelegramChatId != null)// check use2FATelegram
+				if (Program.bot.Bot != null && f.TelegramChatId != null)// check use2FATelegram
 				{
 					var otp = OtpGenerator.GenerateNumericOTP(6);
 					var res = f.GetXmlProp("otpTimestamp");
@@ -93,14 +93,26 @@ namespace Achiever.Controllers
 						await ctx.SaveChangesAsync();
 						await Program.bot.Bot.SendTextMessageAsync(chatId: f.TelegramChatId, text:
 					$"OTP: {otp}", cancellationToken: Program.bot.CancellationToken);
-					}
+
+                        var retData = new
+                        {
+                            message = "otp",
+                            timestamp = DateTime.UtcNow
+                        };
+                        return Ok(retData);
+                    }
 
 				}
 				else
 				{
 					HttpContext.Session.SetObject("user", f);
-				}
-				return Ok();
+                }
+                var resultData = new
+                {
+                    message = "passed",                    
+                    timestamp = DateTime.UtcNow
+                };
+                return Ok(resultData);
 			}
 			return BadRequest(new { code = 1, message = "user not found" });
 		}

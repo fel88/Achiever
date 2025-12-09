@@ -1,6 +1,7 @@
 ﻿using Achiever.Common.Model;
 using Achiever.Dtos;
 using Achiever.Model;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -526,11 +527,29 @@ namespace Achiever.Api
             }
             sb.Remove(sb.Length - 1, 1);
             sb.Append("]");
+            int fs = 16;
+            try
+            {
+                var arr1 = Tokenize(ch.BadgeSettings);
+
+                for (int i = 0; i < arr1.Length; i++)
+                {
+                    if (arr1[i].Contains("fontSize"))
+                    {
+                        fs = int.Parse(arr1[i + 2]);
+                        break;                        
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
             ch.BadgeSettings = @"{
 'text': " + sb.ToString() + @",
 	'backColor': " + $"'#{clr1.R:X2}{clr1.G:X2}{clr1.B:X2}{clr1.A:X2}'" + @",
 	'color': " + $"'#{clr2.R:X2}{clr2.G:X2}{clr2.B:X2}{clr2.A:X2}'" + @",
-'fontSize': 16
+'fontSize': "+fs+@"
 }";
             await ctx.SaveChangesAsync();
             var data = new { ContrastRatio = ColorContrastCalculator.GetContrastRatio(clr1, clr2) };            

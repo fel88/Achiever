@@ -114,11 +114,26 @@
                 return;
 
                 let cid = $(this).attr('itemId');
+
+                 const targetBadgeDiv = document.querySelector(".challenge-badge-div[challengeId='"+cid+"']");
+
                 await fetch('/api/Challenge/badge_rnd/' + cid, {
                     method: 'PATCH'
+                }).then(async (r) => {
+                    if (r.ok) {
+
+                        await fetch('/api/Cabinet/badge/' + cid, {
+                    method: 'GET',
                 }).then((r) => {
                     if (r.ok) {
-                        window.location.reload(true);
+                        return r.text();
+                    } else {
+                        console.log(r.status);
+                        throw new Error('promise chain cancelled');
+                    }
+                }).then((r) => { targetBadgeDiv.innerHTML = r; });
+
+                        //window.location.reload(true);
                     } else {
                         console.log(r.status);
                     }
@@ -128,8 +143,12 @@
                 ee.preventDefault();
                 let step = parseInt($(this).attr('step'));
 
-                if (!confirm('Вы уверены что хотите изменить шрифт?')) return;
+                if (!confirm('Вы уверены что хотите изменить шрифт?'))
+                return;
+
                 let cid = $(this).attr('itemId');
+                 const targetBadgeDiv = document.querySelector(".challenge-badge-div[challengeId='"+cid+"']");
+
                 let item = {
                     step: step,
                     badgeId: parseInt(cid)
@@ -140,9 +159,20 @@
                     headers: {
                         'Content-Type': 'application/json; charset=utf-8'
                     }
+                }).then(async (r) => {
+                    if (r.ok) {
+
+                        await fetch('/api/Cabinet/badge/' + cid, {
+                    method: 'GET',
                 }).then((r) => {
                     if (r.ok) {
-                        window.location.reload(true);
+                        return r.text();
+                    } else {
+                        console.log(r.status);
+                        throw new Error('promise chain cancelled');
+                    }
+                }).then((r) => { targetBadgeDiv.innerHTML = r; });
+                        //window.location.reload(true);
                     } else {
                         console.log(r.status);
                     }
@@ -395,7 +425,7 @@
         progress::-webkit-progress-value {
             background: orange;
             /*  border: 1px solid black;
-                                                                            height: 20px;*/
+                                                                                height: 20px;*/
             border-radius: 10px;
         }
 
@@ -436,7 +466,7 @@
         <br />
 
 
-    @*     @if (user.GoldUser)
+        @*     @if (user.GoldUser)
         {
             <h3>Ваш тарифный план: полный доступ</h3>
         }

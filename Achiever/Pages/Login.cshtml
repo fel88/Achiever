@@ -96,35 +96,44 @@
                 }
                 ).then(async function (r)  {
                     if (r.ok) {
-                        let otp=prompt("Please enter a OTP:"); 
-                        let d2 = {
-                    login: loginv,
-                    password: otp
-                }
-                         await fetch('/api/Login/otp', {
+                        r.json().then(async function(rr){
+                            if(rr.message=='passed'){
+                                window.location = 'Cabinet';
+                            }
+                        else
+                            if(rr.message=='otp'){
+        let otp=prompt("Please enter a OTP:");
+                              let d2 = {
+                          login: loginv,
+                          password: otp
+                      }
+                               await fetch('/api/Login/otp', {
 
-                    method: 'POST',
-                    headers: {
+                          method: 'POST',
+                          headers: {
 
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(d2)
-                }
-                ).then(async function (r)  {
-                    if (r.ok) {                        
+                              'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify(d2)
+                      }
+                      ).then(async function (r)  {
+                          if (r.ok) {
 
-                        window.location = 'Cabinet';
-                    } else {
-                        await r.json().then((res) => {
-                            if (res.code == 2) {
-                                alert('Пользователь деактивирован');
-                            } else if (res.code == 1) {
-                                alert('Пользователь не найден');
+                              window.location = 'Cabinet';
+                          } else {
+                              await r.json().then((res) => {
+                                  if (res.code == 2) {
+                                      alert('Пользователь деактивирован');
+                                  } else if (res.code == 1) {
+                                      alert('Пользователь не найден');
+                                  }
+                              });
+                              console.log(r.status);
+                          }
+                      });
                             }
                         });
-                        console.log(r.status);
-                    }
-                });
+
                         //window.location = 'Cabinet';
                     } else {
                         await r.json().then((res) => {

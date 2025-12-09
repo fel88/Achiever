@@ -1,4 +1,5 @@
-﻿using Achiever.Controllers;
+﻿using Achiever.Common.Model;
+using Achiever.Controllers;
 using Achiever.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace Achiever.Api
             {
                 Login = dto.login,
                 Name = dto.name,
-                Password = LoginController.ComputeSha256Hash(dto.password)
+                Password = dto.password.ComputeSha256Hash()
             }
                 );
 

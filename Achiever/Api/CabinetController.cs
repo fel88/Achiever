@@ -1,4 +1,5 @@
-﻿using Achiever.Controllers;
+﻿using Achiever.Common.Model;
+using Achiever.Controllers;
 using Achiever.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.ConstrainedExecution;

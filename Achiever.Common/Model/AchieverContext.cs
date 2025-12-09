@@ -1,4 +1,4 @@
-﻿using Achiever.Controllers;
+﻿using Achiever.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Achiever.Model
+namespace Achiever.Common.Model
 {
     public class AchieverContext : DbContext
     {
@@ -15,7 +15,7 @@ namespace Achiever.Model
             Database.EnsureCreated();
             if (!Users.Any() || !Users.Any(z => z.Login == "local_admin"))
             {
-                Users.Add(new User() { Enabled = true, IsAdmin = true, Login = "local_admin", Name = "local_admin", Password = LoginController.ComputeSha256Hash("12345") });
+                Users.Add(new User() { Enabled = true, IsAdmin = true, Login = "local_admin", Name = "local_admin", Password = "12345".ComputeSha256Hash() });
                 SaveChanges();
             }
         }

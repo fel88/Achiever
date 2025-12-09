@@ -1,4 +1,5 @@
-﻿using Achiever.Dtos;
+﻿using Achiever.Common.Model;
+using Achiever.Dtos;
 using Achiever.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

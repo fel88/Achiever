@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Achiever.Model;
+using Achiever.Common.Model;
 
 namespace Achiever
 {

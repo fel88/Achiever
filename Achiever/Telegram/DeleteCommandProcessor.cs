@@ -1,4 +1,5 @@
-﻿using Achiever.Model;
+﻿using Achiever.Common.Model;
+using Achiever.Model;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;

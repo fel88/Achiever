@@ -57,9 +57,9 @@ namespace Achiever.Api
                 ret.Add(new
                 {
                     name = item.Name,
-                    startTimestamp = frr.Min(z => z.Timestamp).ToString("o"),
-                    endTimestamp = frr.Max(z => z.Timestamp).ToString("o"),
-                    record ,
+                    startTimestamp = frr.Min(z => z.Timestamp).ToLongDateString(),
+                    endTimestamp = frr.Max(z => z.Timestamp).ToLongDateString(),
+                    record,
                     isRecord = current == record && CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(frr2.First().Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
                                             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday),
                     currentSum = current,
@@ -96,7 +96,7 @@ namespace Achiever.Api
 
                 var frr = all.GroupBy(z => z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
 
-                var frr2 = all.Where(z => z.Timestamp.Year == DateTime.Now.Year).ToArray();
+                var frr2 = all.Where(z => z.Timestamp.Year == DateTime.UtcNow.Year).ToArray();
                 var record = frr.Sum(u => u.Count);
                 var current = frr2.Sum(z => z.Count);
                 ret.Add(new
@@ -104,7 +104,56 @@ namespace Achiever.Api
                     name = item.Name,
                     year = frr.First().Timestamp.Date.ToString("yyyy"),
                     record,
-                    isRecord = current == record && frr.First().Timestamp.Date.Year == DateTime.Now.Year,
+                    isRecord = current == record && frr.First().Timestamp.Date.Year == DateTime.UtcNow.Year,
+                    currentSum = current,
+                    remainsToRecord = (record - current),
+                    lastRecordTimestamp = all.Any() ? all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o") : "none"
+                });
+
+            }
+            return Ok(ret);
+        }
+
+        [HttpGet("/api/[controller]/data/records/month"), Produces("application/json")]
+        public async Task<IActionResult> MonthRecordsJson()
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))
+                return Unauthorized();
+
+            using var context = AchieverContextHolder.GetContext();
+            List<object> ret = new List<object>();
+            var user = Helper.GetUser(HttpContext.Session);
+
+            var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+
+            foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+            {
+                var feats = item.GetFeatures();
+                if (feats != null && !feats.IsCumulative)
+                    continue;
+
+                var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+
+                var all = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+
+                if (!all.Any())
+                    continue;
+
+                var frr = all.GroupBy(z =>
+                           $"{z.Timestamp.Month};{z.Timestamp.Year}").OrderByDescending(z => z.Sum(u => u.Count)).First();
+
+                var frr2 = all.Where(z => z.Timestamp.Month == DateTime.Now.Month && z.Timestamp.Year == DateTime.Now.Year).ToArray();
+
+               
+
+                var record = frr.Sum(u => u.Count);
+                var current = frr2.Sum(z => z.Count);
+                ret.Add(new
+                {
+                    name = item.Name,
+                    date = frr.First().Timestamp.Date.ToString("MMMM yyyy"),
+                    record,
+                    isRecord = current == record && frr.First().Timestamp.Date.Year == DateTime.UtcNow.Year && frr.First().Timestamp.Date.Month == DateTime.UtcNow.Month,
                     currentSum = current,
                     remainsToRecord = (record - current),
                     lastRecordTimestamp = all.Any() ? all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o") : "none"

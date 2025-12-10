@@ -26,98 +26,152 @@
     <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@2.4.0/build/global/luxon.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <style>
+        .my-icon-plus {
+            color: green; 
+        }
+    </style>
 }
 @section Scripts {
     <script>
-        $(document).ready(function () {
+        $(document).ready(async function () {
                     //create Tabulator on DOM element with id "example-table"
-        var table = new Tabulator("#week-table", {
-             rowHeight:40, //set rows to 40px height
-              theme: "table-borderless", // Removes all borders
-                ajaxURL: "/api/Cabinet/data/records/week", // URL to fetch JSON data from
-        // other options
-            layout:"fitColumns", //fit columns to width of table (optional)
-            columns:[ //Define Table Columns
-                {title:"Name", field:"name", width:150},
-                {title:"startTimestamp",  formatter: "datetime",formatterParams:{
-                // Input format matches what ASP.NET returns (ISO 8601 is default)
-                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
-                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
-                outputFormat:"dd/MM/yyyy HH:mm",
-                // Optional: set a timezone if necessary
-                // timezone:"America/Los_Angeles",
-            },
-            sorter:"datetime", // Allows correct date sorting
-            sorterParams:{
-                // Input format for sorting must also match the data source
-                format:"yyyy-MM-dd'T'HH:mm:ss",
-            },field:"startTimestamp"},
-                {title:"endTimestamp", formatter: "datetime",formatterParams:{
-                // Input format matches what ASP.NET returns (ISO 8601 is default)
-                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
-                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
-                outputFormat:"dd/MM/yyyy HH:mm",
-                // Optional: set a timezone if necessary
-                // timezone:"America/Los_Angeles",
-            },
-            sorter:"datetime", // Allows correct date sorting
-            sorterParams:{
-                // Input format for sorting must also match the data source
-                format:"yyyy-MM-dd'T'HH:mm:ss",
-            }, field:"endTimestamp"},
-                {title:"record", field:"record"},
-                {title:"isRecord", field:"isRecord"},
-                {title:"currentSum", field:"currentSum"},
-                {title:"remainsToRecord", field:"remainsToRecord"},
-                {title:"lastRecordTimestamp", formatter: "datetime",formatterParams:{
-                // Input format matches what ASP.NET returns (ISO 8601 is default)
-                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
-                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
-                outputFormat:"dd/MM/yyyy HH:mm",
-                // Optional: set a timezone if necessary
-                // timezone:"America/Los_Angeles",
-            },
-            sorter:"datetime", // Allows correct date sorting
-            sorterParams:{
-                // Input format for sorting must also match the data source
-                format:"yyyy-MM-dd'T'HH:mm:ss",
-            }, field:"lastRecordTimestamp"},
-            ],
-        });
 
 
-          new Tabulator("#year-table", {
-             rowHeight:40, //set rows to 40px height
-              theme: "table-borderless", // Removes all borders
-                ajaxURL: "/api/Cabinet/data/records/year", // URL to fetch JSON data from
-        // other options
-            layout:"fitColumns", //fit columns to width of table (optional)
-            columns:[ //Define Table Columns
-                {title:"Name", field:"name", width:150},
-                {title:"year",  field:"year"},
-               
-                {title:"record", field:"record"},
-                {title:"isRecord", field:"isRecord"},
-                {title:"currentSum", field:"currentSum"},
-                {title:"remainsToRecord", field:"remainsToRecord"},
-                {title:"lastRecordTimestamp", formatter: "datetime",formatterParams:{
-                // Input format matches what ASP.NET returns (ISO 8601 is default)
-                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
-                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
-                outputFormat:"dd/MM/yyyy HH:mm",
-                // Optional: set a timezone if necessary
-                // timezone:"America/Los_Angeles",
-            },
-            sorter:"datetime", // Allows correct date sorting
-            sorterParams:{
-                // Input format for sorting must also match the data source
-                format:"yyyy-MM-dd'T'HH:mm:ss",
-            }, field:"lastRecordTimestamp"},
-            ],
-        });
+
+        async function fetchJson(url){
+               try {
+          // 1. Fetch the resource from the network (returns a Response object promise)
+          const response = await fetch(url);
+
+          // Check if the request was successful (status code 200-299)
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // 2. Parse the response body as JSON (returns a JavaScript object promise)
+          return await response.json();
+
+          // Use the parsed data
+          console.log(data);
+          // You can now access properties, e.g., data.someProperty
+
+        } catch (error) {
+          // Handle network errors or other issues
+          console.error('Fetch error:', error);
+        }
+             }
+
+               async function  createMonthTable(){
+                 let monthStats=  await fetchJson('/api/Cabinet/data/records/month');
+
+                  // Get the table body and the template
+        const tbody = document.querySelector("#month-table tbody");
+        const template = document.querySelector("#month-row-template");
+
+        // Check if the browser supports the template element
+        if ('content' in document.createElement('template')) {
+
+        for (const p of monthStats) {
+            // Clone the template content (the tr element)
+                const clone = document.importNode(template.content, true);
+
+                // Populate the cells with data
+                clone.querySelector('.month-row-name').textContent = p.name;
+                clone.querySelector('.month-row-date').textContent = p.date;
+                clone.querySelector('.month-row-record').textContent = p.record;
+
+                if(Boolean(p.isRecord))
+                    clone.querySelector('.month-row-current').innerHTML  = '<b style="color: blue">рекорд!</b>';
+                else
+                    clone.querySelector('.month-row-current').innerHTML = `${p.currentSum}<br/> <span>До рекорда: ${p.remainsToRecord}</span>`;
+
+
+                // Append the populated row to the table body
+                tbody.appendChild(clone);
+        }
+
+        } else {
+            // Fallback for browsers that do not support the template element
+            console.error('HTML template element is not supported');
+        }
+        }
+
+             async function  createWeekTable(){
+                 let weekStats=  await fetchJson('/api/Cabinet/data/records/week');
+
+                  // Get the table body and the template
+        const tbody = document.querySelector("#week-table tbody");
+        const template = document.querySelector("#week-row-template");
+
+        // Check if the browser supports the template element
+        if ('content' in document.createElement('template')) {
+
+        for (const p of weekStats) {
+            // Clone the template content (the tr element)
+                const clone = document.importNode(template.content, true);
+
+                // Populate the cells with data
+                clone.querySelector('.week-row-name').textContent = p.name;
+                clone.querySelector('.week-row-date').textContent = `${p.startTimestamp} - ${p.endTimestamp}`;
+                clone.querySelector('.week-row-record').textContent = p.record;
+
+                if(Boolean(p.isRecord))
+                    clone.querySelector('.week-row-current').innerHTML  = '<b style="color: blue">рекорд!</b>';
+                else
+                    clone.querySelector('.week-row-current').innerHTML = `${p.currentSum}<br/> <span>До рекорда: ${p.remainsToRecord}</span>`;
+
+
+                // Append the populated row to the table body
+                tbody.appendChild(clone);
+        }
+
+        } else {
+            // Fallback for browsers that do not support the template element
+            console.error('HTML template element is not supported');
+        }
+        }
+
+          async function  createYearTable(){
+           let yearStats=  await fetchJson('/api/Cabinet/data/records/year');
+                  // Get the table body and the template
+        const tbody = document.querySelector("#year-table tbody");
+        const template = document.querySelector("#year-row-template");
+
+        // Check if the browser supports the template element
+        if ('content' in document.createElement('template')) {
+
+        for (const p of yearStats) {
+            // Clone the template content (the tr element)
+                const clone = document.importNode(template.content, true);
+
+                // Populate the cells with data
+                clone.querySelector('.year-row-name').textContent = p.name;
+                clone.querySelector('.year-row-year').textContent = p.year;
+                clone.querySelector('.year-row-record').textContent = p.record;
+
+                if(Boolean(p.isRecord))
+                    clone.querySelector('.year-row-current').innerHTML  = '<b style="color: blue">рекорд!</b>';
+                else
+                    clone.querySelector('.year-row-current').innerHTML = `${p.currentSum}<br/> <span>До рекорда: ${p.remainsToRecord}</span>`;
+
+
+                // Append the populated row to the table body
+                tbody.appendChild(clone);
+        }
+
+        } else {
+            // Fallback for browsers that do not support the template element
+            console.error('HTML template element is not supported');
+        }
+        }
+        await createYearTable();
+        await createWeekTable();
+        await createMonthTable();
 
         function hideAllTables(){
-              $("#week-table").hide();                
+              $("#week-table").hide();
                 $("#month-table").hide();
                 $("#day-table").hide();
                 $("#year-table").hide();
@@ -286,130 +340,36 @@
 <div>
     <h3>Рекорды</h3>
 
-    @{
+@{
 
-        void RenderButtonPlus()
-        {
-            <svg class="svg-plus-btn" xmlns:dc="http://purl.org/dc/elements/1.1/"
-                 xmlns:cc="http://creativecommons.org/ns#"
-                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-                 xmlns:svg="http://www.w3.org/2000/svg"
-                 xmlns="http://www.w3.org/2000/svg"
-                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                 xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-                 xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-                 width="4.4465075mm"
-                 height="4.4465075mm"
-                 viewBox="0 0 29.92857 29.92857"
-                 id="svg2"
-                 version="1.1"
-                 inkscape:version="0.91 r13725"
-                 sodipodi:docname="plus1.svg">
-                <defs id="defs4">
-                    <linearGradient inkscape:collect="always"
-                                    id="linearGradient4170">
-                        <stop style="stop-color:#647ee7;stop-opacity:1;"
-                              offset="0"
-                              id="stop4172" />
-                        <stop style="stop-color:#647ee7;stop-opacity:0;"
-                              offset="1"
-                              id="stop4174" />
-                    </linearGradient>
-                    <radialGradient inkscape:collect="always"
-                                    xlink:href="#linearGradient4170"
-                                    id="radialGradient4178"
-                                    cx="215.71428"
-                                    cy="256.64792"
-                                    fx="215.71428"
-                                    fy="256.64792"
-                                    r="47.642857"
-                                    gradientUnits="userSpaceOnUse"
-                                    gradientTransform="matrix(0.31409294,0,0,0.31409294,115.28137,143.35805)" />
-                </defs>
-                <sodipodi:namedview id="base"
-                                    pagecolor="#ffffff"
-                                    bordercolor="#666666"
-                                    borderopacity="1.0"
-                                    inkscape:pageopacity="0.0"
-                                    inkscape:pageshadow="2"
-                                    inkscape:zoom="7.9195959"
-                                    inkscape:cx="12.405905"
-                                    inkscape:cy="26.643679"
-                                    inkscape:document-units="px"
-                                    inkscape:current-layer="layer1"
-                                    showgrid="false"
-                                    fit-margin-top="0"
-                                    fit-margin-left="0"
-                                    fit-margin-right="0"
-                                    fit-margin-bottom="0"
-                                    inkscape:window-width="1920"
-                                    inkscape:window-height="931"
-                                    inkscape:window-x="1352"
-                                    inkscape:window-y="-8"
-                                    inkscape:window-maximized="1" />
-                <metadata id="metadata7">
-                    <rdf:RDF>
-                        <cc:Work rdf:about="">
-                            <dc:format>image/svg+xml</dc:format>
-                            <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-                            <dc:title />
-                        </cc:Work>
-                    </rdf:RDF>
-                </metadata>
-                <g inkscape:label="Layer 1"
-                   inkscape:groupmode="layer"
-                   id="layer1"
-                   transform="translate(-168.07142,-209.00506)">
-                    <circle style="opacity:1;fill:#ff6600;fill-opacity:1;fill-rule:nonzero;stroke:url(#radialGradient4178);stroke-width:0.31409293;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-                            id="path4136"
-                            cx="183.03571"
-                            cy="223.96935"
-                            r="14.807239" />
-                    <rect style="opacity:1;fill:#ffeeaa;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-                          id="rect4138"
-                          width="4.3085423"
-                          height="15.62272"
-                          x="181.06769"
-                          y="216.33948"
-                          ry="0" />
-                    <rect style="opacity:1;fill:#ffeeaa;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-                          id="rect4138-0"
-                          width="4.5655689"
-                          height="15.370181"
-                          x="221.70856"
-                          y="-191.1938"
-                          ry="0"
-                          transform="matrix(0,1,-1,0,0,0)" />
-                </g>
-            </svg>
-        }
+    
 
-        void RenderDoubleTopUpButton(int val, string val2, int achId)
-        {
+    void RenderDoubleTopUpButton(int val, string val2, int achId)
+    {
 
             <input class="hide1-cls val1" type="text" value="@val" style="display:none" />
             <input class="hide1-cls val2" type="text" value="@val2" style="display:none" />
             <a class="top-up-doubled-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
             <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
-        }
-        void RenderTopUpButton(int val, int achId)
-        {
+    }
+    void RenderTopUpButton(int val, int achId)
+    {
 
             <input class="hide1-cls" type="text" value="@val" style="display:none" />
             <a class="top-up-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
             <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
-        }
     }
+}
     <a class="active-btn record-btn " id="set-btn" href="#"> Максимальный подоход</a>
     <a class="record-btn " id="day-btn" href="#"> Дневной максимум</a>
     <a class="record-btn " id="week-btn" href="#"> Недельный максимум</a>
     <a class="record-btn " id="month-btn" href="#"> Месячный максимум</a>
     <a class="record-btn " id="year-btn" href="#"> Годовой максимум</a>
-    @{
-        var context = AchieverContextHolder.GetContext();
-        var user = Helper.GetUser(HttpContext.Session);
+@{
+    var context = AchieverContextHolder.GetContext();
+    var user = Helper.GetUser(HttpContext.Session);
 
-        var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+    var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
         <table id="set-table" style="border: solid 1px;border:1">
             <tr>
                 <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
@@ -482,9 +442,7 @@
                             <div>
                                 @item.Name
                                 <a href="#" achId="@item.Id" class="add-btn">
-                                    @{
-                                        RenderButtonPlus();
-                                    }
+                                    <i class="fa-solid fa-circle-plus my-icon-plus"></i>
                                     <span style="margin: 5px">добавить</span>
                                 </a>
 
@@ -513,6 +471,10 @@
                                 else
                 @dcount1
                 
+
+
+
+
 
 
 
@@ -573,9 +535,9 @@
                 }
             }
         </table>
-    }
+}
 
-    @{
+@{
 
 
         <table id="day-table" style="display:none; border: solid 1px;border:1">
@@ -635,9 +597,7 @@
                         <td style=" border: 1px solid black;padding:10px;">
                             @item.Name
                             <a href="#" achId="@item.Id" class="add-btn">
-                                @{
-                                    RenderButtonPlus();
-                                }
+                                <i class="fa-solid fa-circle-plus my-icon-plus"></i>
                                 <span style="margin: 5px">добавить</span>
                             </a>
 
@@ -705,199 +665,74 @@
                 }
             }
         </table>
-    }
+}
 
 
-    @{
-        <div id="week-table"></div>
 
-        // <table id="week-table" style="display:none; border: solid 1px;border:1">
-        //     <tr>
-        //         <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-        //         <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-        //         <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-        //         <th style=" border: 1px solid black;padding:10px;">Эта неделя</th>
-        //     </tr>
-        //     @{
-        //         foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-        //         {
-        //             var feats = item.GetFeatures();
-        //             if (feats != null && !feats.IsCumulative)
-        //                 continue;
-        //             var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+    <table id="week-table" style="display:none; border: solid 1px;">
+        <tr>
+            <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+            <th style=" border: 1px solid black;padding:10px;">Эта неделя</th>
+        </tr>
+    </table>
+    <!-- The template for a single row -->
+    <template id="week-row-template">
+        <tr style=" border: 1px solid black;padding:10px;">
+            <td style=" border: 1px solid black;padding:10px;" class="week-row-name"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="week-row-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="week-row-record"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="week-row-current"></td>
 
-        //             if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
-        //                 continue;
-
-
-        //             var frr = context.AchievementValueItems
-        //             .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
-        //             .ToArray()
-        //             .GroupBy(z =>
-        //             z.Timestamp.Year + ";" +
-        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)).OrderByDescending(z => z.Sum(u => u.Count)).First();
-
-        //             var frr2 = context.AchievementValueItems
-        //             .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
-        //             .ToArray()
-        //             .Where(z =>
-        //             DateTime.Now.Year == z.Timestamp.Year &&
-        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
-        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)
-        //             );
-
-        //             <tr style=" border: 1px solid black;padding:10px;">
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @item.Name
-
-        //                 </td>
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @frr.Min(z => z.Timestamp).ToLongDateString() - @frr.Max(z => z.Timestamp).ToLongDateString()
-        //                 </td>
-        //                 <td style=" border: 1px solid black;padding:10px;">
-
-        //                     @frr.Sum(u => u.Count)
-        //                 </td>
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count) && CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(frr2.First().Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
-        //                                     CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
-        //                     {
-        //                         <b style="color: blue">рекорд!</b>
-
-        //                     }
-        //                     else
-        //                     {
-        //                         @frr2.Sum(z => z.Count)
-        //                         <br />
-        //                         <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
-        //                     }
-        //                 </td>
-        //             </tr>
-
-        //         }
-        //     }
-        // </table>
-    }
+        </tr>
+    </template>
 
 
-    @{
-        <table id="month-table" style="display:none; border: solid 1px;border:1">
+    <table id="month-table" style="display:none; border: solid 1px">
+        <tr>
+            <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+            <th style=" border: 1px solid black;padding:10px;">В этом месяце</th>
+        </tr>
+        
+    </table>
+    <template id="month-row-template">
+        <tr style=" border: 1px solid black;padding:10px;">
+            <td style=" border: 1px solid black;padding:10px;" class="month-row-name"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="month-row-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="month-row-record"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="month-row-current"></td>
+
+        </tr>
+    </template>
+
+
+
+
+
+        <table id="year-table" style="display:none; border: solid 1px">
             <tr>
                 <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
                 <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
                 <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">В этом месяце</th>
+                <th style=" border: 1px solid black;padding:10px;">В этом году</th>
             </tr>
-            @{
-                foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-                {
-                    var feats = item.GetFeatures();
-                    if (feats != null && !feats.IsCumulative) continue;
-                    var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
 
-
-                    if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any()) continue;
-                    var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().GroupBy(z =>
-                    z.Timestamp.Month + ";" + z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
-
-                    var frr2 = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Month == DateTime.Now.Month && z.Timestamp.Year == DateTime.Now.Year).ToArray();
-
-                    <tr style=" border: 1px solid black;padding:10px;">
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @item.Name
-
-                        </td>
-
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @frr.First().Timestamp.Date.ToString("MMMM yyyy")
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-
-                            @frr.Sum(u => u.Count)
-                        </td>
-
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count)
-                                            && frr.First().Timestamp.Date.Year == DateTime.Now.Year
-                                            && frr.First().Timestamp.Date.Month == DateTime.Now.Month
-                                            )
-                            {
-                                <b style="color: blue">рекорд!</b>
-                            }
-                            else
-                            {
-                                @frr2.Sum(z => z.Count)
-                                <br />
-                                <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
-                            }
-                        </td>
-
-                    </tr>
-
-                }
-            }
         </table>
-    }
-    @{
-        <div id="year-table"></div>
+        <!-- The template for a single row -->
+        <template id="year-row-template">
+            <tr style=" border: 1px solid black;padding:10px;">
+                <td style=" border: 1px solid black;padding:10px;" class="year-row-name"></td>
+                <td style=" border: 1px solid black;padding:10px;" class="year-row-year"></td>
+                <td style=" border: 1px solid black;padding:10px;" class="year-row-record"></td>
+                <td style=" border: 1px solid black;padding:10px;" class="year-row-current"></td>
 
-        // <table id="year-table" style="display:none; border: solid 1px;border:1">
-        //     <tr>
-        //         <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-        //         <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-        //         <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-        //         <th style=" border: 1px solid black;padding:10px;">В этом году</th>
-        //     </tr>
-        //     @{
-        //         foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-        //         {
-        //             var feats = item.GetFeatures();
-        //             if (feats != null && !feats.IsCumulative) continue;
-        //             var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+            </tr>
+        </template>
 
 
+</div>
 
-        //             if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any()) continue;
-        //             var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().GroupBy(z =>
-        //             z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
-
-        //             var frr2 = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Year == DateTime.Now.Year).ToArray();
-
-        //             <tr style=" border: 1px solid black;padding:10px;">
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @item.Name
-
-        //                 </td>
-
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @frr.First().Timestamp.Date.ToString("yyyy")
-        //                 </td>
-        //                 <td style=" border: 1px solid black;padding:10px;">
-
-        //                     @frr.Sum(u => u.Count)
-        //                 </td>
-
-        //                 <td style=" border: 1px solid black;padding:10px;">
-        //                     @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count)
-        //                                     && frr.First().Timestamp.Date.Year == DateTime.Now.Year
-
-        //                                     )
-        //                     {
-        //                         <b style="color: blue">рекорд!</b>
-        //                     }
-        //                     else
-        //                     {
-        //                         @frr2.Sum(z => z.Count)
-        //                         <br />
-        //                         <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
-        //                     }
-        //                 </td>
-
-        //             </tr>
-
-        //         }
-        //     }
-        // </table>
-    }
-</div>
 

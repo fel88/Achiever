@@ -60,6 +60,7 @@ namespace Achiever.Controllers
 		{
 			using var ctx = AchieverContextHolder.GetContext();
 			User f = null;
+			var fp = ctx.GetDatabaseFilePath();
 			foreach (var item in ctx.Users.ToArray())
 			{
 				//if (!Request.IsLocal())                

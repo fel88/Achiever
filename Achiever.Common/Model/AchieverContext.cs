@@ -95,16 +95,17 @@ namespace Achiever.Common.Model
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             var dbProvider = ConfigLoader.ReadSetting("dbProvider");
-            var connectionString = ConfigLoader.ReadSetting("dbConnectionString");
+           // var connectionString = ConfigLoader.ReadSetting("dbConnectionString");
             Console.WriteLine("dbProvider: " + dbProvider);
-            Console.WriteLine("connectionString: " + connectionString);
-            if (dbProvider == "postgres")
+          //  Console.WriteLine("connectionString: " + connectionString);
+           // if (dbProvider == "postgres")
             {
-                options.UseNpgsql(connectionString);
+            //    options.UseNpgsql(connectionString);
             }
-            else
+           // else
             {
-                options.UseSqlite(connectionString ?? "Data Source=achiever.db");
+                // options.UseSqlite(connectionString ?? "Data Source=achiever.db");
+                 options.UseSqlite("Data Source=achiever.db");
             }
 
         }

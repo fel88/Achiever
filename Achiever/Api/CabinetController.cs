@@ -1,11 +1,17 @@
 ﻿using Achiever.Common.Model;
 using Achiever.Controllers;
+using Achiever.Dtos;
 using Achiever.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace Achiever.Api
 {
@@ -13,7 +19,100 @@ namespace Achiever.Api
     [ApiController]
     public class CabinetController : ControllerBase
     {
+        [HttpGet("/api/[controller]/data/records/week"), Produces("application/json")]
+        public async Task<IActionResult> WeekRecordsJson()
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))
+                return Unauthorized();
 
+            using var context = AchieverContextHolder.GetContext();
+            List<object> ret = new List<object>();
+            var user = Helper.GetUser(HttpContext.Session);
+
+            var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+            foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+            {
+                var feats = item.GetFeatures();
+                if (feats != null && !feats.IsCumulative)
+                    continue;
+                var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+
+                if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
+                    continue;
+
+                var all = context.AchievementValueItems
+                .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
+                .ToArray();
+
+                var frr = all.GroupBy(z =>
+                $"{z.Timestamp.Year};{CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)}").OrderByDescending(z => z.Sum(u => u.Count)).First();
+
+                var frr2 = all.Where(z =>
+                DateTime.Now.Year == z.Timestamp.Year &&
+                CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
+                CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)
+                );
+                var record = frr.Sum(u => u.Count);
+                var current = frr2.Sum(z => z.Count);
+                ret.Add(new
+                {
+                    name = item.Name,
+                    startTimestamp = frr.Min(z => z.Timestamp).ToString("o"),
+                    endTimestamp = frr.Max(z => z.Timestamp).ToString("o"),
+                    record ,
+                    isRecord = current == record && CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(frr2.First().Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
+                                            CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday),
+                    currentSum = current,
+                    remainsToRecord = (record - current),
+                    lastRecordTimestamp = all.Any() ? all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o") : "none"
+                });
+            }
+
+            return Ok(ret);
+        }
+
+        [HttpGet("/api/[controller]/data/records/year"), Produces("application/json")]
+        public async Task<IActionResult> YearRecordsJson()
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))
+                return Unauthorized();
+
+            using var context = AchieverContextHolder.GetContext();
+            List<object> ret = new List<object>();
+            var user = Helper.GetUser(HttpContext.Session);
+
+            var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+
+            foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+            {
+                var feats = item.GetFeatures();
+                if (feats != null && !feats.IsCumulative) continue;
+                var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+
+                var all = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+
+                if (!all.Any())
+                    continue;
+
+                var frr = all.GroupBy(z => z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
+
+                var frr2 = all.Where(z => z.Timestamp.Year == DateTime.Now.Year).ToArray();
+                var record = frr.Sum(u => u.Count);
+                var current = frr2.Sum(z => z.Count);
+                ret.Add(new
+                {
+                    name = item.Name,
+                    year = frr.First().Timestamp.Date.ToString("yyyy"),
+                    record,
+                    isRecord = current == record && frr.First().Timestamp.Date.Year == DateTime.Now.Year,
+                    currentSum = current,
+                    remainsToRecord = (record - current),
+                    lastRecordTimestamp = all.Any() ? all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o") : "none"
+                });
+
+            }
+            return Ok(ret);
+        }
 
         [HttpGet("/api/[controller]/badge/{id}")]
         public async Task<IActionResult> GetCompetitionBadge(int id)
@@ -84,20 +183,20 @@ namespace Achiever.Api
             }
             b = b.Replace("@Lines", sb.ToString());
             b = b.Replace("hidden", "visible");
-           /* b = @"<svg>
-  <rect id=""box""  fill="""+ bdi.BackColor + @"""  stroke="""+ bdi .Color+ @""" x=""0"" y=""0"" width=""450"" height=""150""/>
-<!-- The Text -->
-    <text 
-        x=""50%"" 
-        y=""50%"" 
-        dominant-baseline=""middle"" 
-        text-anchor=""middle"" 
-        fill=""black"" 
-        font-family=""sans-serif"" 
-        font-size=""20px"">
-        " + txt[0] +@"
-    </text>
-</svg>";*/
+            /* b = @"<svg>
+   <rect id=""box""  fill="""+ bdi.BackColor + @"""  stroke="""+ bdi .Color+ @""" x=""0"" y=""0"" width=""450"" height=""150""/>
+ <!-- The Text -->
+     <text 
+         x=""50%"" 
+         y=""50%"" 
+         dominant-baseline=""middle"" 
+         text-anchor=""middle"" 
+         fill=""black"" 
+         font-family=""sans-serif"" 
+         font-size=""20px"">
+         " + txt[0] +@"
+     </text>
+ </svg>";*/
             return Content(b, "image/svg+xml; charset=utf-8");
         }
     }

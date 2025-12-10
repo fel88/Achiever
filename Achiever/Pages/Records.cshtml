@@ -22,16 +22,109 @@
 </style>
 
 <h1>Records</h1>
-
+@section Head {
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.4.0/build/global/luxon.min.js"></script>
+}
 @section Scripts {
     <script>
         $(document).ready(function () {
+                    //create Tabulator on DOM element with id "example-table"
+        var table = new Tabulator("#week-table", {
+             rowHeight:40, //set rows to 40px height
+              theme: "table-borderless", // Removes all borders
+                ajaxURL: "/api/Cabinet/data/records/week", // URL to fetch JSON data from
+        // other options
+            layout:"fitColumns", //fit columns to width of table (optional)
+            columns:[ //Define Table Columns
+                {title:"Name", field:"name", width:150},
+                {title:"startTimestamp",  formatter: "datetime",formatterParams:{
+                // Input format matches what ASP.NET returns (ISO 8601 is default)
+                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
+                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
+                outputFormat:"dd/MM/yyyy HH:mm",
+                // Optional: set a timezone if necessary
+                // timezone:"America/Los_Angeles",
+            },
+            sorter:"datetime", // Allows correct date sorting
+            sorterParams:{
+                // Input format for sorting must also match the data source
+                format:"yyyy-MM-dd'T'HH:mm:ss",
+            },field:"startTimestamp"},
+                {title:"endTimestamp", formatter: "datetime",formatterParams:{
+                // Input format matches what ASP.NET returns (ISO 8601 is default)
+                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
+                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
+                outputFormat:"dd/MM/yyyy HH:mm",
+                // Optional: set a timezone if necessary
+                // timezone:"America/Los_Angeles",
+            },
+            sorter:"datetime", // Allows correct date sorting
+            sorterParams:{
+                // Input format for sorting must also match the data source
+                format:"yyyy-MM-dd'T'HH:mm:ss",
+            }, field:"endTimestamp"},
+                {title:"record", field:"record"},
+                {title:"isRecord", field:"isRecord"},
+                {title:"currentSum", field:"currentSum"},
+                {title:"remainsToRecord", field:"remainsToRecord"},
+                {title:"lastRecordTimestamp", formatter: "datetime",formatterParams:{
+                // Input format matches what ASP.NET returns (ISO 8601 is default)
+                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
+                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
+                outputFormat:"dd/MM/yyyy HH:mm",
+                // Optional: set a timezone if necessary
+                // timezone:"America/Los_Angeles",
+            },
+            sorter:"datetime", // Allows correct date sorting
+            sorterParams:{
+                // Input format for sorting must also match the data source
+                format:"yyyy-MM-dd'T'HH:mm:ss",
+            }, field:"lastRecordTimestamp"},
+            ],
+        });
 
-            $("#set-btn").click(function () {
-                $("#week-table").hide();
+
+          new Tabulator("#year-table", {
+             rowHeight:40, //set rows to 40px height
+              theme: "table-borderless", // Removes all borders
+                ajaxURL: "/api/Cabinet/data/records/year", // URL to fetch JSON data from
+        // other options
+            layout:"fitColumns", //fit columns to width of table (optional)
+            columns:[ //Define Table Columns
+                {title:"Name", field:"name", width:150},
+                {title:"year",  field:"year"},
+               
+                {title:"record", field:"record"},
+                {title:"isRecord", field:"isRecord"},
+                {title:"currentSum", field:"currentSum"},
+                {title:"remainsToRecord", field:"remainsToRecord"},
+                {title:"lastRecordTimestamp", formatter: "datetime",formatterParams:{
+                // Input format matches what ASP.NET returns (ISO 8601 is default)
+                inputFormat:"yyyy-MM-dd'T'HH:mm:ss",
+                // Output format for display in the table (e.g., "DD/MM/YY hh:mm A" for AM/PM)
+                outputFormat:"dd/MM/yyyy HH:mm",
+                // Optional: set a timezone if necessary
+                // timezone:"America/Los_Angeles",
+            },
+            sorter:"datetime", // Allows correct date sorting
+            sorterParams:{
+                // Input format for sorting must also match the data source
+                format:"yyyy-MM-dd'T'HH:mm:ss",
+            }, field:"lastRecordTimestamp"},
+            ],
+        });
+
+        function hideAllTables(){
+              $("#week-table").hide();                
                 $("#month-table").hide();
                 $("#day-table").hide();
                 $("#year-table").hide();
+                $("#set-table").hide();
+        }
+            $("#set-btn").click(function () {
+                hideAllTables();
                 $("#set-table").show();
 
                 $("#set-btn").addClass("active-btn");
@@ -428,6 +521,9 @@
 
 
 
+
+
+
             </td>
             <td style=" border: 1px solid black;padding:10px;">
                 @if (count2 != null)
@@ -613,74 +709,74 @@
 
 
     @{
+        <div id="week-table"></div>
+
+        // <table id="week-table" style="display:none; border: solid 1px;border:1">
+        //     <tr>
+        //         <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+        //         <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+        //         <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+        //         <th style=" border: 1px solid black;padding:10px;">Эта неделя</th>
+        //     </tr>
+        //     @{
+        //         foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+        //         {
+        //             var feats = item.GetFeatures();
+        //             if (feats != null && !feats.IsCumulative)
+        //                 continue;
+        //             var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+
+        //             if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
+        //                 continue;
 
 
-        <table id="week-table" style="display:none; border: solid 1px;border:1">
-            <tr>
-                <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-                <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-                <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">Эта неделя</th>
-            </tr>
-            @{
-                foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-                {
-                    var feats = item.GetFeatures();
-                    if (feats != null && !feats.IsCumulative)
-                        continue;
-                    var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+        //             var frr = context.AchievementValueItems
+        //             .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
+        //             .ToArray()
+        //             .GroupBy(z =>
+        //             z.Timestamp.Year + ";" +
+        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)).OrderByDescending(z => z.Sum(u => u.Count)).First();
 
-                    if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
-                        continue;
+        //             var frr2 = context.AchievementValueItems
+        //             .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
+        //             .ToArray()
+        //             .Where(z =>
+        //             DateTime.Now.Year == z.Timestamp.Year &&
+        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
+        //             CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)
+        //             );
 
+        //             <tr style=" border: 1px solid black;padding:10px;">
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @item.Name
 
-                    var frr = context.AchievementValueItems
-                    .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
-                    .ToArray()
-                    .GroupBy(z =>
-                    z.Timestamp.Year + ";" +
-                    CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)).OrderByDescending(z => z.Sum(u => u.Count)).First();
+        //                 </td>
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @frr.Min(z => z.Timestamp).ToLongDateString() - @frr.Max(z => z.Timestamp).ToLongDateString()
+        //                 </td>
+        //                 <td style=" border: 1px solid black;padding:10px;">
 
-                    var frr2 = context.AchievementValueItems
-                    .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)))
-                    .ToArray()
-                    .Where(z =>
-                    DateTime.Now.Year == z.Timestamp.Year &&
-                    CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(z.Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
-                    CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday)
-                    );
+        //                     @frr.Sum(u => u.Count)
+        //                 </td>
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count) && CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(frr2.First().Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
+        //                                     CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
+        //                     {
+        //                         <b style="color: blue">рекорд!</b>
 
-                    <tr style=" border: 1px solid black;padding:10px;">
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @item.Name
+        //                     }
+        //                     else
+        //                     {
+        //                         @frr2.Sum(z => z.Count)
+        //                         <br />
+        //                         <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
+        //                     }
+        //                 </td>
+        //             </tr>
 
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @frr.Min(z => z.Timestamp).ToLongDateString() - @frr.Max(z => z.Timestamp).ToLongDateString()
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-
-                            @frr.Sum(u => u.Count)
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count) && CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(frr2.First().Timestamp.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday) ==
-                                            CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.UtcNow.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
-                            {
-                                <b style="color: blue">рекорд!</b>
-
-                            }
-                            else
-                            {
-                                @frr2.Sum(z => z.Count)
-                                <br />
-                                <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
-                            }
-                        </td>
-                    </tr>
-
-                }
-            }
-        </table>
+        //         }
+        //     }
+        // </table>
     }
 
 
@@ -743,62 +839,65 @@
         </table>
     }
     @{
-        <table id="year-table" style="display:none; border: solid 1px;border:1">
-            <tr>
-                <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-                <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-                <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">В этом году</th>
-            </tr>
-            @{
-                foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-                {
-                    var feats = item.GetFeatures();
-                    if (feats != null && !feats.IsCumulative) continue;
-                    var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+        <div id="year-table"></div>
+
+        // <table id="year-table" style="display:none; border: solid 1px;border:1">
+        //     <tr>
+        //         <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+        //         <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+        //         <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+        //         <th style=" border: 1px solid black;padding:10px;">В этом году</th>
+        //     </tr>
+        //     @{
+        //         foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+        //         {
+        //             var feats = item.GetFeatures();
+        //             if (feats != null && !feats.IsCumulative) continue;
+        //             var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
 
 
 
-                    if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any()) continue;
-                    var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().GroupBy(z =>
-                    z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
+        //             if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any()) continue;
+        //             var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().GroupBy(z =>
+        //             z.Timestamp.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
 
-                    var frr2 = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Year == DateTime.Now.Year).ToArray();
+        //             var frr2 = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Year == DateTime.Now.Year).ToArray();
 
-                    <tr style=" border: 1px solid black;padding:10px;">
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @item.Name
+        //             <tr style=" border: 1px solid black;padding:10px;">
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @item.Name
 
-                        </td>
+        //                 </td>
 
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @frr.First().Timestamp.Date.ToString("yyyy")
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @frr.First().Timestamp.Date.ToString("yyyy")
+        //                 </td>
+        //                 <td style=" border: 1px solid black;padding:10px;">
 
-                            @frr.Sum(u => u.Count)
-                        </td>
+        //                     @frr.Sum(u => u.Count)
+        //                 </td>
 
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count)
-                                            && frr.First().Timestamp.Date.Year == DateTime.Now.Year
+        //                 <td style=" border: 1px solid black;padding:10px;">
+        //                     @if (frr2.Sum(z => z.Count) == frr.Sum(u => u.Count)
+        //                                     && frr.First().Timestamp.Date.Year == DateTime.Now.Year
 
-                                            )
-                            {
-                                <b style="color: blue">рекорд!</b>
-                            }
-                            else
-                            {
-                                @frr2.Sum(z => z.Count)
-                                <br />
-                                <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
-                            }
-                        </td>
+        //                                     )
+        //                     {
+        //                         <b style="color: blue">рекорд!</b>
+        //                     }
+        //                     else
+        //                     {
+        //                         @frr2.Sum(z => z.Count)
+        //                         <br />
+        //                         <span>До рекорда: @(frr.Sum(u => u.Count) - frr2.Sum(z => z.Count))</span>
+        //                     }
+        //                 </td>
 
-                    </tr>
+        //             </tr>
 
-                }
-            }
-        </table>
+        //         }
+        //     }
+        // </table>
     }
-</div>
+</div>
+

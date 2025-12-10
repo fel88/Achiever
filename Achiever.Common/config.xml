@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <root>
 	<setting name="allowLocalAdmin" value="true"/>
-	<setting name="dbProvider" value="postgres"/>		
+	<!--<setting name="dbProvider" value="postgres"/>		
 	<setting name="dbConnectionString">
 		<![CDATA[Host=localhost;Database=achiever;Username=postgres;Password=12345]]>
-	</setting>
+	</setting>-->
 </root>

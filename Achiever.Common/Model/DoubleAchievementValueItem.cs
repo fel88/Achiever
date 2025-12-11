@@ -12,6 +12,7 @@ namespace Achiever.Model
         public int Count { get; set; }
         public string Description { get; set; }
         public int Count2 { get; set; }
+        public string XmlConfig { get; set; }
 
     }
 }

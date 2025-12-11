@@ -618,7 +618,9 @@
     foreach (var chitem2 in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToList())
     {
         var chitem = chitem2.Challenge;
-        if (chitem2.IsComplete) continue;
+        if (chitem2.IsComplete)
+        continue;
+
         TimeSpan? ts = null;
         if (chitem.UntilDate != null)
         {

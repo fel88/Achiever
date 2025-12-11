@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
@@ -114,6 +115,185 @@ namespace Achiever.Api
             return Ok(ret);
         }
 
+        [HttpGet("/api/[controller]/data/records/set"), Produces("application/json")]
+        public async Task<IActionResult> SetRecordsJson()
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))
+                return Unauthorized();
+
+            using var context = AchieverContextHolder.GetContext();
+            List<object> ret = new List<object>();
+            var user = Helper.GetUser(HttpContext.Session);
+
+            var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+
+            foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+            {
+
+                var feats = item.GetFeatures();
+                if (feats != null && !feats.IsCumulative)
+                    continue;
+
+                dynamic recordStr = 0;
+                dynamic record = 0;
+                dynamic currentStr = 0;
+                dynamic current = 0;
+                bool hasCurrent = false;
+
+                DateTime? dts1 = null;
+
+                var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+                string lastRecordTimestamp = "";
+                bool doubled = false;
+                if (feats != null)
+                {
+                    doubled = feats.IsDoubleValued;
+                }
+                if (doubled)
+                {
+                    var all = context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+                    if (all.Any())
+                    {
+                        var frr = all.OrderByDescending(z => z.Count * z.Count2).First();
+                        var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).OrderByDescending(z => z.Count * z.Count2).ToArray();
+                        var total = frr.Count * frr.Count2 / 100.0;
+
+                        record = (int)total;
+                        recordStr = $"{frr.Count} x {frr.Count2 / 100.0} = {frr.Count * frr.Count2 / 100.0}";
+
+                        if (frr2.Any())
+                        {
+                            var fff = frr2.First();
+                            current = (int)(fff.Count * fff.Count2 / 100.0);
+                            currentStr = $"{fff.Count} x {fff.Count2 / 100.0} = {fff.Count * fff.Count2 / 100.0}";
+                            hasCurrent = true;
+                        }
+
+                        //current = frr2.Sum(u => u.Count * u.Count2) / 100.0;
+                        dts1 = frr.Timestamp;
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+                    }
+                }
+                else
+                {
+                    var all = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+
+                    if (all.Any())
+                    {
+                        var frr = all.OrderByDescending(z => z.Count).First();
+                        var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).OrderByDescending(z => z.Count).ToArray();
+
+                        record = frr.Count;
+                        recordStr = frr.Count.ToString();
+                        dts1 = frr.Timestamp;
+                        if (frr2.Any())
+                        {
+                            current = frr2.First().Count;
+                            currentStr = (frr2.First().Count).ToString();
+                            hasCurrent = true;
+                        }
+
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+                    }
+                }
+
+                ret.Add(new
+                {
+                    id = item.Id,
+                    name = item.Name,
+                    doubled,
+                    hasCurrent,
+                    hasDate = dts1.HasValue,
+                    date = dts1.HasValue ? ($"{dts1.Value.ToLongDateString()} {dts1.Value.ToLongTimeString()}") : "none",
+                    record = recordStr,
+                    isRecord = (record == current && dts1 == DateTime.UtcNow.Date),
+                    currentSum = currentStr,
+                    remainsToRecord = record - current,
+                    lastRecordTimestamp
+                });
+
+            }
+            return Ok(ret);
+        }
+
+        [HttpGet("/api/[controller]/data/records/day"), Produces("application/json")]
+        public async Task<IActionResult> DayRecordsJson()
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))
+                return Unauthorized();
+
+            using var context = AchieverContextHolder.GetContext();
+            List<object> ret = new List<object>();
+            var user = Helper.GetUser(HttpContext.Session);
+
+            var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+
+            foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
+            {
+
+                var feats = item.GetFeatures();
+                if (feats != null && !feats.IsCumulative)
+                    continue;
+
+                dynamic record = 0;
+                dynamic current = 0;
+
+                DateTime? dts1 = null;
+
+                var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+                string lastRecordTimestamp = "";
+                bool doubled = false;
+                if (feats != null)
+                {
+                    doubled = feats.IsDoubleValued;
+                }
+                if (doubled)
+                {
+                    var all = context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+                    if (all.Any())
+                    {
+                        var frr = all.GroupBy(z => $"{z.Timestamp.Year};{z.Timestamp.DayOfYear}").OrderByDescending(z => z.Sum(u => u.Count * u.Count2)).First();
+                        var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).ToArray();
+                        record = frr.Sum(u => u.Count * u.Count2) / 100.0;
+                        current = frr2.Sum(u => u.Count * u.Count2) / 100.0;
+                        dts1 = frr.First().Timestamp.Date;
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+
+                    }
+                }
+                else
+                {
+                    var all = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray();
+
+                    if (all.Any())
+                    {
+                        var frr = all.GroupBy(z => $"{z.Timestamp.Year};{z.Timestamp.DayOfYear}").OrderByDescending(z => z.Sum(u => u.Count)).First();
+                        var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).ToArray();
+                        record = frr.Sum(u => u.Count);
+                        current = frr2.Sum(u => u.Count);
+                        dts1 = frr.First().Timestamp.Date;
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+                    }
+                }
+
+
+                ret.Add(new
+                {
+                    id = item.Id,
+                    name = item.Name,
+                    doubled,
+                    hasDate = dts1.HasValue,
+                    date = dts1.HasValue ? dts1.Value.ToLongDateString() : "none",
+                    record,
+                    isRecord = (record == current && dts1 == DateTime.UtcNow.Date),
+                    currentSum = current,
+                    remainsToRecord = record - current,
+                    lastRecordTimestamp
+                });
+
+            }
+            return Ok(ret);
+        }
         [HttpGet("/api/[controller]/data/records/month"), Produces("application/json")]
         public async Task<IActionResult> MonthRecordsJson()
         {
@@ -144,7 +324,7 @@ namespace Achiever.Api
 
                 var frr2 = all.Where(z => z.Timestamp.Month == DateTime.Now.Month && z.Timestamp.Year == DateTime.Now.Year).ToArray();
 
-               
+
 
                 var record = frr.Sum(u => u.Count);
                 var current = frr2.Sum(z => z.Count);

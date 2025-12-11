@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
     <style>
         .my-icon-plus {
-            color: green; 
+            color: green;
         }
     </style>
 }
@@ -63,7 +63,106 @@
         }
              }
 
-               async function  createMonthTable(){
+        async function  createSetTable(){
+                 let setStats=  await fetchJson('/api/Cabinet/data/records/set');
+
+                          // Get the table body and the template
+                const tbody = document.querySelector("#set-table tbody");
+                const template = document.querySelector("#set-row-template");
+                const template_btn1 = document.querySelector("#single-up-button-template");
+                const template_btn2 = document.querySelector("#double-up-button-template");
+
+                // Check if the browser supports the template element
+                if ('content' in document.createElement('template')) {
+
+                for (const p of setStats) {
+                    // Clone the template content (the tr element)
+                        const clone = document.importNode(template.content, true);
+
+                        const clone_btn = document.importNode((Boolean(p.doubled)?template_btn2: template_btn1).content, true);
+                           clone_btn.querySelector('.top-up-btn').setAttribute('achId', p.id);
+
+                        // Populate the cells with data
+                        clone.querySelector('.set-row-name > span:first-of-type').textContent = p.name;
+                        clone.querySelector('.set-row-name > a:first-of-type').setAttribute('achId', p.id);
+
+                        clone.querySelector('.set-row-name ').appendChild(clone_btn);
+
+                        clone.querySelector('.set-row-date').innerHTML = Boolean(p.hasDate)?p.date:'<span>нет данных</span>';
+
+                        if(Boolean(p.hasCurrent)){
+                            if(Boolean(p.isRecord)){
+                                 clone.querySelector('.set-row-record').innerHTML = ' <b style="color: blue">рекорд!</b>';
+                            }else
+                            {
+                                clone.querySelector('.set-row-record').innerHTML = p.record;
+                            }
+                        }else
+                        {
+                             clone.querySelector('.set-row-record').innerHTML = '<span>нет данных</span>';
+                        }
+
+
+                        if(Boolean(p.isRecord))
+                            clone.querySelector('.set-row-current').innerHTML  = '<b style="color: blue">рекорд!</b>';
+                        else
+                            clone.querySelector('.set-row-current').innerHTML = `${p.currentSum}<br/> <span>До рекорда: ${p.remainsToRecord}</span>`;
+
+
+                        // Append the populated row to the table body
+                        tbody.appendChild(clone);
+                }
+
+                } else {
+                    // Fallback for browsers that do not support the template element
+                    console.error('HTML template element is not supported');
+                }
+        }
+        async function  createDayTable(){
+                 let dayStats=  await fetchJson('/api/Cabinet/data/records/day');
+
+                          // Get the table body and the template
+                const tbody = document.querySelector("#day-table tbody");
+                const template = document.querySelector("#day-row-template");
+                const template_btn1 = document.querySelector("#single-up-button-template");
+                const template_btn2 = document.querySelector("#double-up-button-template");
+
+                // Check if the browser supports the template element
+                if ('content' in document.createElement('template')) {
+
+                for (const p of dayStats) {
+                    // Clone the template content (the tr element)
+                        const clone = document.importNode(template.content, true);
+
+                        const clone_btn = document.importNode((Boolean(p.doubled)?template_btn2: template_btn1).content, true);
+                           clone_btn.querySelector('.top-up-btn').setAttribute('achId', p.id);
+
+                        // Populate the cells with data
+                        clone.querySelector('.day-row-name > span:first-of-type').textContent = p.name;
+                        clone.querySelector('.day-row-name > a:first-of-type').setAttribute('achId', p.id);
+
+                        clone.querySelector('.day-row-name ').appendChild(clone_btn);
+
+                        clone.querySelector('.day-row-date').innerHTML = Boolean(p.hasDate)?p.date:'<span>нет данных</span>';
+                        clone.querySelector('.day-row-record').textContent = p.record;
+
+                        if(Boolean(p.isRecord))
+                            clone.querySelector('.day-row-current').innerHTML  = '<b style="color: blue">рекорд!</b>';
+                        else
+                            clone.querySelector('.day-row-current').innerHTML = `${p.currentSum}<br/> <span>До рекорда: ${p.remainsToRecord}</span>`;
+
+
+                        // Append the populated row to the table body
+                        tbody.appendChild(clone);
+                }
+
+                } else {
+                    // Fallback for browsers that do not support the template element
+                    console.error('HTML template element is not supported');
+                }
+        }
+
+        async function  createMonthTable(){
                  let monthStats=  await fetchJson('/api/Cabinet/data/records/month');
 
                   // Get the table body and the template
@@ -169,6 +268,8 @@
         await createYearTable();
         await createWeekTable();
         await createMonthTable();
+        await createDayTable();
+        await createSetTable();
 
         function hideAllTables(){
               $("#week-table").hide();
@@ -340,332 +441,91 @@
 <div>
     <h3>Рекорды</h3>
 
-@{
 
-    
-
-    void RenderDoubleTopUpButton(int val, string val2, int achId)
-    {
-
-            <input class="hide1-cls val1" type="text" value="@val" style="display:none" />
-            <input class="hide1-cls val2" type="text" value="@val2" style="display:none" />
-            <a class="top-up-doubled-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
-            <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
-    }
-    void RenderTopUpButton(int val, int achId)
-    {
-
-            <input class="hide1-cls" type="text" value="@val" style="display:none" />
-            <a class="top-up-ok-btn hide1-cls" achId="@achId" href="#" style="display:none">ok</a>
-            <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
-    }
-}
     <a class="active-btn record-btn " id="set-btn" href="#"> Максимальный подоход</a>
     <a class="record-btn " id="day-btn" href="#"> Дневной максимум</a>
     <a class="record-btn " id="week-btn" href="#"> Недельный максимум</a>
     <a class="record-btn " id="month-btn" href="#"> Месячный максимум</a>
     <a class="record-btn " id="year-btn" href="#"> Годовой максимум</a>
-@{
-    var context = AchieverContextHolder.GetContext();
-    var user = Helper.GetUser(HttpContext.Session);
 
-    var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
-        <table id="set-table" style="border: solid 1px;border:1">
-            <tr>
-                <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-                <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-                <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">Сегодня</th>
-            </tr>
-            @{
-                foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-                {
-                    var feats = item.GetFeatures();
-                    if (feats != null && feats.IsSingular)
-                        continue;
+    <template id="double-up-button-template">
+        <br />
+        <input class="hide1-cls val1" type="text" value="0" style="display:none" /><span class="hide1-cls" style="display:none"> reps</span>
+        <br />
+        <input class="hide1-cls val2" type="text" value="0.00" style="display:none" /><span class="hide1-cls" style="display:none"> kg</span>
+        <br />
+        <a class="top-up-doubled-ok-btn top-up-btn hide1-cls" achId="achId" href="#" style="display:none">ok</a>
+        <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
+    </template>
 
-                    int count1 = 0;
-                    DateTime? ts = null;
-                    int? count2 = null;
-                    string dcount1 = "";
-                    string dcount2 = "";
-                    bool doubled = false;
-                    if (feats != null)
-                    {
-                        doubled = feats.IsDoubleValued;
-                    }
+    <template id="single-up-button-template">
+        <br />
+        <input class="hide1-cls" type="text" value="0" style="display:none" />
+        <a class="top-up-ok-btn top-up-btn hide1-cls" achId="achId" href="#" style="display:none">ok</a>
+        <a class="top-up-cancel-btn hide1-cls" href="#" style="display:none">cancel</a>
+    </template>
+    @{
+        var context = AchieverContextHolder.GetContext();
+        var user = Helper.GetUser(HttpContext.Session);
 
-                    if (!doubled)
-                    {
-                        if (context.AchievementValueItems.Where(z => z.User.Id == usr.Id && item.Id == z.Achievement.Id).Any())
-                        {
-                            var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
+        var usr = context.Users.Find(Helper.GetUser(HttpContext.Session).Id);
+    }
 
-                            var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).OrderByDescending(z => z.Count).First();
-                            var frr2p = context.AchievementValueItems
-                            .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Date == DateTime.UtcNow.Date)
-                            .OrderByDescending(z => z.Count);
-
-                            count1 = frr.Count;
-                            ts = frr.Timestamp;
-                            if (frr2p.Any())
-                            {
-                                count2 = frr2p.First().Count;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && item.Id == z.Achievement.Id).Any())
-                        {
-                            var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
-
-                            var frr = context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).OrderByDescending(z => z.Count * z.Count2).First();
-                            var frr2p = context.DoubleAchievementValueItems
-                            .Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Date == DateTime.UtcNow.Date)
-                            .OrderByDescending(z => z.Count * z.Count2);
-                            var total = frr.Count * frr.Count2 / 100.0;
-                            count1 = (int)total;
-                            dcount1 = $"{frr.Count} x {frr.Count2 / 100.0} = {frr.Count * frr.Count2 / 100.0}";
-                            ts = frr.Timestamp;
-                            if (frr2p.Any())
-                            {
-                                var fff = frr2p.First();
-                                count2 = (int)(fff.Count * fff.Count2 / 100.0);
-                                dcount2 = $"{fff.Count} x {fff.Count2 / 100.0} = {fff.Count * fff.Count2 / 100.0}";
-                            }
-                        }
-                    }
-                    <tr style=" border: 1px solid black;padding:10px;">
-                        <td style=" border: 1px solid black;padding:10px;">
-
-                            <div>
-                                @item.Name
-                                <a href="#" achId="@item.Id" class="add-btn">
-                                    <i class="fa-solid fa-circle-plus my-icon-plus"></i>
-                                    <span style="margin: 5px">добавить</span>
-                                </a>
-
-                                @{
-                                    @if (doubled)
-                                        RenderDoubleTopUpButton(0, "0.00", item.Id);
-                                    else
-                                        RenderTopUpButton(0, item.Id);
-                                }
-                            </div>
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (ts == null)
-                            {
-                                <span>нет данных</span>
-
-                            }
-                            else
-                            {
-                                @(ts.Value.ToLongDateString() + " " + ts.Value.ToLongTimeString())
-                            }
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (!doubled)
-                @count1
-                                else
-                @dcount1
-                
+    <table id="set-table" style="display:none; border: solid 1px;">
+        <tr>
+            <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+            <th style=" border: 1px solid black;padding:10px;">Сегодня</th>
+        </tr>
+    </table>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <!-- The template for a single row -->
+    <template id="set-row-template">
+        <tr style=" border: 1px solid black;padding:10px;">
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-name">
+                <span>item.Name</span>
+                <a href="#" achId="item.Id" class="add-btn">
+                    <i class="fa-solid fa-circle-plus my-icon-plus"></i>
+                    <span style="margin: 5px">добавить</span>
+                </a>
             </td>
-            <td style=" border: 1px solid black;padding:10px;">
-                @if (count2 != null)
-                                    {
-                                        @if (count2 == count1)
-                                        {
-                                            <b style="color: blue">рекорд!</b>
-                                        }
-                                        else
-                                        {
-                                            @if (doubled)
-                @dcount2
-                                else
-                @count2
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-record"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-current"></td>
+
+        </tr>
+    </template>
 
 
 
+    <table id="day-table" style="display:none; border: solid 1px;">
+        <tr>
+            <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+            <th style=" border: 1px solid black;padding:10px;">Сегодня</th>
+        </tr>
+    </table>
 
 
+    <!-- The template for a single row -->
+    <template id="day-row-template">
+        <tr style=" border: 1px solid black;padding:10px;">
+            <td style=" border: 1px solid black;padding:10px;" class="day-row-name">
+                <span>item.Name</span>
+                <a href="#" achId="item.Id" class="add-btn">
+                    <i class="fa-solid fa-circle-plus my-icon-plus"></i>
+                    <span style="margin: 5px">добавить</span>
+                </a>
+            </td>
+            <td style=" border: 1px solid black;padding:10px;" class="day-row-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="day-row-record"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="day-row-current"></td>
 
-
-                                }
-                                    }
-                                    else
-                                    {
-                                        <span>нет данных</span>
-                                    }
-
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-
-                            @if (item.Owner != null)
-                            {
-                                <a class="delete-btn" href="#" itemId="@item.Id">
-                                    удалить
-                                </a>
-                            }
-                            else
-                            {
-                                <text></text>
-                            }
-
-                        </td>
-
-                    </tr>
-
-                }
-            }
-        </table>
-}
-
-@{
-
-
-        <table id="day-table" style="display:none; border: solid 1px;border:1">
-            <tr>
-                <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-                <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-                <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">Сегодня</th>
-            </tr>
-            @{
-                foreach (var item in context.AchievementItems.Include(z => z.Owner).Where(z => z.OwnerId == null || z.OwnerId == user.Id).ToArray())
-                {
-                    var feats = item.GetFeatures();
-                    if (feats != null && !feats.IsCumulative) continue;
-                    //if (!context.AchievementValueItems.Where(z => z.User.Id == usr.Id && item.Id == z.Achievement.Id).Any()) continue;
-                    int frrSum = 0;
-                    int frrSum2 = 0;
-                    double frrSumd = 0;
-                    double frrSum2d = 0;
-                    DateTime? dts1 = null;
-                    var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
-
-                    bool doubled = false;
-                    if (feats != null)
-                    {
-                        doubled = feats.IsDoubleValued;
-                    }
-
-                    if (!doubled)
-
-                        if (context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
-                        {
-                            var frr = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().
-                            GroupBy(z => z.Timestamp.Year + ";" +
-                            z.Timestamp.DayOfYear).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                            var frr2 = context.AchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Date
-                            == DateTime.UtcNow.Date).ToArray();
-                            frrSum = frr.Sum(u => u.Count);
-                            frrSum2 = frr2.Sum(u => u.Count);
-                            dts1 = frr.First().Timestamp.Date;
-                        }
-                    if (doubled)
-                        if (context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).Any())
-                        {
-                            var frr = context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id))).ToArray().
-                            GroupBy(z => z.Timestamp.Year + ";" +
-                            z.Timestamp.DayOfYear).OrderByDescending(z => z.Sum(u => u.Count * u.Count2)).First();
-                            var frr2 = context.DoubleAchievementValueItems.Where(z => z.User.Id == usr.Id && (z.Achievement.Id == item.Id || chlds.Contains(z.Achievement.Id)) && z.Timestamp.Date
-                            == DateTime.UtcNow.Date).ToArray();
-                            frrSumd = frr.Sum(u => u.Count * u.Count2) / 100.0;
-                            frrSum2d = frr2.Sum(u => u.Count * u.Count2) / 100.0;
-                            dts1 = frr.First().Timestamp.Date;
-                        }
-
-
-                    <tr style=" border: 1px solid black;padding:10px;">
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @item.Name
-                            <a href="#" achId="@item.Id" class="add-btn">
-                                <i class="fa-solid fa-circle-plus my-icon-plus"></i>
-                                <span style="margin: 5px">добавить</span>
-                            </a>
-
-                            @{
-                                @if (doubled)
-                                    RenderDoubleTopUpButton(0, "0.00", item.Id);
-                                else
-                                    RenderTopUpButton(0, item.Id);
-
-                            }
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (dts1 == null)
-                            {
-                                <span>нет данных</span>
-                            }
-                            else
-                            {
-                                @(dts1.Value.ToLongDateString())
-                            }
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (!doubled)
-                            {
-                                @frrSum
-                            }
-                            else
-                            {
-                                @frrSumd
-                            }
-
-                        </td>
-                        <td style=" border: 1px solid black;padding:10px;">
-                            @if (!doubled)
-                            {
-                                @if (frrSum2 == frrSum && dts1 == DateTime.UtcNow.Date)
-                                {
-                                    <b style="color: blue">рекорд!</b>
-                                }
-                                else
-                                {
-                                    @frrSum2
-                                    <br />
-                                    <span>
-                                        До рекорда: @(
-                                        frrSum - frrSum2
-                                        )
-                </span>
-                                }
-                            }
-                            else
-                            { @if (frrSum2d == frrSumd && dts1 == DateTime.UtcNow.Date)
-                                {
-                                    <b style="color: blue">рекорд!</b>
-                                }
-                                else
-                                {
-                                    @frrSum2d
-                                    <br />
-                                    <span>До рекорда: @(frrSumd - frrSum2d)</span>
-                                }
-                            }
-                        </td>
-                    </tr>
-                }
-            }
-        </table>
-}
+        </tr>
+    </template>
 
 
 
@@ -696,7 +556,7 @@
             <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
             <th style=" border: 1px solid black;padding:10px;">В этом месяце</th>
         </tr>
-        
+
     </table>
     <template id="month-row-template">
         <tr style=" border: 1px solid black;padding:10px;">
@@ -709,28 +569,25 @@
     </template>
 
 
+    <table id="year-table" style="display:none; border: solid 1px">
+        <tr>
+            <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
+            <th style=" border: 1px solid black;padding:10px;">В этом году</th>
+        </tr>
 
+    </table>
+    <!-- The template for a single row -->
+    <template id="year-row-template">
+        <tr style=" border: 1px solid black;padding:10px;">
+            <td style=" border: 1px solid black;padding:10px;" class="year-row-name"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="year-row-year"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="year-row-record"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="year-row-current"></td>
 
-
-        <table id="year-table" style="display:none; border: solid 1px">
-            <tr>
-                <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-                <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
-                <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
-                <th style=" border: 1px solid black;padding:10px;">В этом году</th>
-            </tr>
-
-        </table>
-        <!-- The template for a single row -->
-        <template id="year-row-template">
-            <tr style=" border: 1px solid black;padding:10px;">
-                <td style=" border: 1px solid black;padding:10px;" class="year-row-name"></td>
-                <td style=" border: 1px solid black;padding:10px;" class="year-row-year"></td>
-                <td style=" border: 1px solid black;padding:10px;" class="year-row-record"></td>
-                <td style=" border: 1px solid black;padding:10px;" class="year-row-current"></td>
-
-            </tr>
-        </template>
+        </tr>
+    </template>
 
 
 </div>

@@ -425,7 +425,7 @@
         progress::-webkit-progress-value {
             background: orange;
             /*  border: 1px solid black;
-                                                                                height: 20px;*/
+                                                                                    height: 20px;*/
             border-radius: 10px;
         }
 
@@ -568,7 +568,7 @@
 @{
 
     void RenderButtonPlus()
-    {        
+    {
         <svg class="svg-plus-btn" width="4.4465mm" height="4.4465mm" version="1.1" viewBox="0 0 29.929 29.929" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
             <defs>
                 <radialGradient id="a" cx="215.71" cy="256.65" r="47.643" gradientTransform="matrix(.31409 0 0 .31409 115.28 143.36)" gradientUnits="userSpaceOnUse">
@@ -619,7 +619,7 @@
     {
         var chitem = chitem2.Challenge;
         if (chitem2.IsComplete)
-        continue;
+            continue;
 
         TimeSpan? ts = null;
         if (chitem.UntilDate != null)
@@ -709,7 +709,7 @@
                 {
                     var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
                     string clr = "#bbddff";
-                    bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
+                    bool achieved = bb.IsAimAchieved(ctx, chitem2, user);
                     bool secondProgressBarEnabled = true;
                     if (achieved)
                     {
@@ -741,8 +741,8 @@
                             int target2 = bb.Count.Value;
 
 
-                            var cnstr = Helper.ExtractAimSettings(bb);
-                            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
+                            var cnstr = bb.ExtractAimSettings();
+                            var percnt = bb.GetPercentOfAim(ctx, chitem2);
 
                             switch (bb.Type)
                             {
@@ -755,202 +755,15 @@
 
                                         var addstr4 = "";
                                         string addstr5 = "";
-                                        var todays = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
-                                        if (cnstr != null)
-                                        {
-                                            switch (cnstr.Period)
-                                            {
-                                                case PeriodTypeEnum.Year:
-                                                    {
-
-                                                        addstr3 = "за год";
-                                                        if (aa.Any())
-                                                        {
-                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
-
-
-                                                            addstr4 = fr.Key.ToString();
-                                                            cnt = fr.Sum(z => z.Count);
-                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
-                                                            cnt11 = todays.Sum(z => z.Count);
-                                                        }
-                                                        else
-                                                        {
-
-                                                            addstr4 = "";
-                                                            cnt = 0;
-                                                            todays = aa.Where(z => z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
-                                                            cnt11 = todays.Sum(z => z.Count);
-                                                        }
-
-                                                    }
-                                                    break;
-                                                case PeriodTypeEnum.Month:
-                                                    {
-                                                        addstr3 = "за месяц";
-                                                        if (aa.Any())
-                                                        {
-                                                            var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count * Helper.GetModifier(u.Timestamp, ctx))).First();
-
-                                                            var split = fr.Key.Split(';').Select(int.Parse).ToArray();
-                                                            var dt = new DateTime(split[1], split[0], 1);
-
-                                                            addstr4 = dt.ToString("MMMM yyyy");
-                                                            cnt = (int)fr.Sum(z => z.Count * Helper.GetModifier(z.Timestamp, ctx));
-                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
-                                                            var rawCount = todays.Sum(z => z.Count);
-                                                            cnt11 = (int)todays.ToArray().Sum(z => z.Count * Helper.GetModifier(z.Timestamp, ctx));
-                                                            var required = (int)Math.Ceiling(target2 / (float)DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month));
-                                                            var diff = cnt11 - DateTime.UtcNow.Day * required;
-                                                            var penalty = rawCount - cnt11;
-                                                            if (diff >= 0)
-                                                            {
-                                                                addstr5 = "опрежение +" + diff;
-                                                            }
-                                                            else
-                                                            {
-                                                                addstr5 = "отставание " + diff;
-                                                            }
-                                                            if (penalty > 0)
-                                                            {
-                                                                addstr5 += $" (штраф {penalty}) модификатор: x{Helper.GetModifier(DateTime.UtcNow, ctx)}";
-                                                            }
-                                                        }
-                                                        else
-                                                        {
-                                                            addstr4 = "";
-                                                            cnt = 0;
-                                                            todays = aa.Where(z => z.Timestamp.Date.Month == DateTime.UtcNow.Date.Month && z.Timestamp.Date.Year == DateTime.UtcNow.Date.Year);
-                                                            cnt11 = todays.Sum(z => z.Count);
-                                                        }
-
-                                                    }
-                                                    break;
-                                                case PeriodTypeEnum.Day:
-                                                    {
-                                                        addstr3 = "за день";
-                                                        if (cnstr.Times != null)
-                                                        {
-                                                            addstr3 = $"за день ({bb.Count.Value} повторений)";
-                                                            var lst = aa.ToList();
-                                                            if (cnstr.MinCountPerSet != null)
-                                                            {
-                                                                lst = aa.Where(z => z.Count >= cnstr.MinCountPerSet.Value).ToList();
-                                                                addstr3 += $" (мин. {cnstr.MinCountPerSet.Value} за подход)";
-                                                            }
-                                                            cnt = lst.GroupBy(z => z.Timestamp.Date).Where(z => z.Sum(u => u.Count) >= target).Count();
-                                                            target = cnstr.Times.Value;
-                                                            var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
-                                                            if (todays1.Any())
-                                                            {
-                                                                cnt11 = todays1.Sum(z => z.Count);
-                                                            }
-
-
-                                                            /*addstr3 = $"за подход ({bb.Count.Value} повторений)";
-                                                            target = cnstr.Times.Value;
-                                                            secondProgressBarEnabled = false;
-                                                            var lst = aa.Where(z => z.Count >= bb.Count).ToList();
-                                                            cnt = lst.Count;*/
-                                                            addstr3 += $" (требуется дней за все время: {cnstr.Times.Value})";
-                                                        }
-                                                        else if (cnstr.MinCountPerSet != null)
-                                                        {
-                                                            var lst = aa.Where(z => z.Count >= cnstr.MinCountPerSet.Value).ToList();
-                                                            if (lst.Any())
-                                                            {
-                                                                var fr = lst.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                                                                var todays1 = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).Where(z => z.Count >= cnstr.MinCountPerSet.Value);
-                                                                var lastOne = fr.OrderByDescending(z => z.Timestamp).First();
-                                                                addstr4 = lastOne.Timestamp.ToLongDateString() + " " + lastOne.Timestamp.ToLongTimeString();
-
-                                                                cnt = fr.Sum(z => z.Count);
-                                                                if (todays1.Any())
-                                                                {
-                                                                    cnt11 = todays1.Sum(z => z.Count);
-                                                                }
-                                                            }
-                                                            else
-                                                            {
-
-                                                            }
-                                                            addstr3 += $" (мин. {cnstr.MinCountPerSet.Value} за подход)";
-                                                        }
-                                                        else
-                                                        {
-                                                            if (aa.Any())
-                                                            {
-                                                                var fr = aa.ToList().GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
-
-                                                                addstr4 = fr.Key.ToLongDateString();
-                                                                cnt = fr.Sum(z => z.Count);
-                                                                cnt11 = todays.Sum(z => z.Count);
-                                                            }
-                                                            else
-                                                            {
-
-                                                                addstr4 = "";
-                                                                cnt = 0;
-                                                                cnt11 = todays.Sum(z => z.Count);
-                                                            }
-                                                        }
-                                                    }
-                                                    break;
-                                                case PeriodTypeEnum.Set:
-                                                    {
-                                                        addstr3 = "за подход";
-                                                        if (cnstr.Times != null)
-                                                        {
-                                                            addstr3 = $"за подход ({bb.Count.Value} повторений)";
-                                                            target = cnstr.Times.Value;
-                                                            secondProgressBarEnabled = false;
-                                                            var lst = aa.Where(z => z.Count >= bb.Count).ToList();
-                                                            cnt = lst.Count;
-                                                            addstr3 += $" (требуется подходов за все время: {cnstr.Times.Value})";
-                                                        }
-                                                        else
-                                                        if (aa.Any())
-                                                        {
-                                                            var fr = aa.OrderByDescending(z => z.Count).First();
-
-
-                                                            addstr4 = fr.Timestamp.ToLongDateString() + " " + fr.Timestamp.ToLongTimeString();
-                                                            cnt = fr.Count;
-                                                            if (todays.Any())
-                                                            {
-                                                                cnt11 = todays.Max(z => z.Count);
-                                                            }
-                                                        }
-                                                        else
-                                                        {
-                                                            addstr4 = "";
-                                                            cnt = 0;
-                                                            if (todays.Any())
-                                                            {
-                                                                cnt11 = todays.Max(z => z.Count);
-                                                            }
-                                                        }
-                                                    }
-
-                                                    break;
-                                                case PeriodTypeEnum.Whole:
-                                                    addstr3 = "за все время";
-                                                    if (aa.Any())
-                                                    {
-                                                        cnt = aa.Sum(z => z.Count);
-                                                        cnt11 = aa.Sum(z => z.Count);
-                                                    }
-                                                    else
-                                                    {
-                                                        cnt = 0;
-                                                        cnt11 = 0;
-                                                    }
-                                                    break;
-                                            }
-                                        }
-
-
-
+                                        // var todays = aa.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date);
+                                        var res = bb.ExtractStringsForBoolAim(ctx, item.Id, chitem2);
+                                        addstr3 = res.addstr3;
+                                        addstr4 = res.addstr3;
+                                        addstr5 = res.addstr5;
+                                        cnt = res.cnt;
+                                        cnt11 = res.cnt11;
+                                        target = res.target;
+                                        secondProgressBarEnabled = res.secondProgressBarEnabled;                                      
 
                                         bool done = false;
                                         if (cnt > target)

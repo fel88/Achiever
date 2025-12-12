@@ -35,7 +35,7 @@ namespace Achiever.Controllers
             return new UserInfoDto()
             {
                 //Complete = sng.CompleteTime.Value,
-                Complete = sng.CompleteTime.Value.ToLongDateString() + " " + sng.CompleteTime.Value.ToLongTimeString(),
+                Complete = $"{sng.CompleteTime.Value.ToLongDateString()} {sng.CompleteTime.Value.ToLongTimeString()}",
                 Text = ss.ToArray(),
                 Name = sng.Challenge.Name
             };

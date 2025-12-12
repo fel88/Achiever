@@ -92,7 +92,7 @@
                     foreach (var bb in item.Aims)
                     {
                         var ach = ctx.AchievementItems.Find(bb.AchievementId);
-                        var cnstr = Helper.ExtractAimSettings(bb);
+                        var cnstr = bb.ExtractAimSettings();
 
                         var pld = Helper.GetProgressLastDay(ctx, bb, a1);
                         if (pld <= 0)
@@ -103,7 +103,7 @@
                         {
                             period = $"({cnstr.Period})";
                         }
-                        var curnp1 = Helper.GetPercentOfAim(ctx, bb, a1);
+                        var curnp1 = bb.GetPercentOfAim(ctx, a1);
 
                         <div style="background-color:white; border-radius: 5px; padding:5px; margin-bottom:10px; border: 1px blue">
                             @{

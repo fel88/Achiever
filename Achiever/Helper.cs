@@ -1,38 +1,22 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using Newtonsoft.Json;
-using System.Globalization;
-using Microsoft.AspNetCore.Http;
-using Achiever;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.CodeAnalysis.Operations;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Achiever.Model;
+﻿using Achiever;
 using Achiever.Common.Model;
+using Achiever.Model;
+using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.Operations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Achiever
 {
-    public class Helper
+    public partial class Helper
     {
-        
-        public static decimal GetModifier(DateTime time, AchieverContext ctx)
-        {            
-            decimal ret = 1;
-            foreach (var item in ctx.Penalties.Include(z => z.Achievement).ToArray())
-            {
-                var achId = item.Achievement.Id;
-                var ww = ctx.AchievementValueItems.Where(z => z.Achievement.Id == achId).ToArray();
-                var dd = ww.Where(z => time > z.Timestamp && Math.Abs((z.Timestamp - time).TotalDays) < item.Days).ToArray();
-                for (int i = 0; i < dd.Length; i++)
-                {
-                    ret *= item.Modifier;
-                }
-            }
 
-            return ret;
-        }
-
+      
         internal static bool IsAuthorized(ISession s)
         {
             return Helper.GetUser(s) != null;
@@ -44,17 +28,17 @@ namespace Achiever
             var user = context.Users.Find(userId);
 
             var userInfos = context.UserChallengeInfos.Where(z => z.ChallengeId == chId && userId == z.UserId).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray();
-            if (!userInfos.Any()) 
+            if (!userInfos.Any())
                 return false;
 
             if (userInfos.Any(z => z.IsComplete))
-                return true;               
-            
+                return true;
+
             var item = userInfos.Where(z => !z.IsComplete).First();
-            
+
             foreach (var aim in item.Challenge.Aims)
             {
-                bool compl = Helper.IsAimAchieved(context, item, aim, user);
+                bool compl = aim.IsAimAchieved(context, item, user);
 
                 if (!compl)
                 {
@@ -65,7 +49,8 @@ namespace Achiever
             var a1 = context.ChallengeRequirements.Include(z => z.Parent).Include(z => z.Child).Where(z => z.Parent.Id == chId).ToArray();
             foreach (var zz in a1)
             {
-                if (!IsComplete(zz.Child.Id, userId)) return false;
+                if (!IsComplete(zz.Child.Id, userId))
+                    return false;
             }
 
             return true;
@@ -86,16 +71,13 @@ namespace Achiever
             }
         }
 
-        public class AimLabels
-        {
-            public string Title;
-        }
+
 
         public static AimLabels GetAimLabels(AchieverContext ctx, UserChallengeInfo chitem2, ChallengeAimItem bb, User user)
         {
             var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
             string clr = "#bbddff";
-            bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
+            bool achieved = bb.IsAimAchieved(ctx, chitem2, user);
             bool secondProgressBarEnabled = true;
 
 
@@ -121,8 +103,8 @@ namespace Achiever
 
             int target = bb.Count.Value;
 
-            var cnstr = Helper.ExtractAimSettings(bb);
-            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
+            var cnstr = bb.ExtractAimSettings();
+            var percnt = bb.GetPercentOfAim(ctx, chitem2);
             AimLabels ret = new AimLabels();
             switch (bb.Type)
             {
@@ -348,116 +330,7 @@ namespace Achiever
             return ret;
         }
 
-        public static bool IsAimAchieved(AchieverContext context, UserChallengeInfo info, ChallengeAimItem aim, User user)
-        {            
-            //var aa = context.AchievementValueItems.Where(z => z.User.Id == user.Id && aim.AchievementId == z.Achievement.Id);
 
-            var chlds = context.AchievementItems.Where(z => z.Parent.Id == aim.AchievementId).Select(z => z.Id).ToArray();
-
-            var aa = context.AchievementValueItems.Where(z => z.User.Id == user.Id
-            && (z.Achievement.Id == aim.AchievementId || chlds.Contains(z.Achievement.Id)) && ((z.Timestamp > info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly));
-            if (aa.Count() == 0)
-            {
-                return false;
-            }
-
-            switch (aim.Type)
-            {
-                case AimType.Count:
-                    var cnt = aa.Sum(z => z.Count);
-                    var target = aim.Count;
-                    if (string.IsNullOrEmpty(aim.Settings))
-                    {
-                        if (cnt >= target) return true;
-                    }
-                    break;
-                case AimType.Days:
-                    break;
-                case AimType.Bool:
-                    {
-                        var cnstr = Helper.ExtractAimSettings(aim);
-                        if (cnstr != null)
-                        {
-                            switch (cnstr.Period)
-                            {
-                                case PeriodTypeEnum.Year:
-                                    {
-
-                                        var ww1 = context.AchievementValueItems.Where(z => z.User.Id == user.Id && ((z.Timestamp >
-                                       info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly) && z.Achievement.Id == aim.AchievementId).
-                                       ToArray().GroupBy(z => z.Timestamp.Date.Year).ToArray();
-                                        if (ww1.Any(z => z.Sum(u => u.Count) >= aim.Count))
-                                        {
-                                            return true;
-                                        }
-                                    }
-                                    break;
-                                case PeriodTypeEnum.Month:
-                                    {
-
-                                        var ww1 = context.AchievementValueItems.Where(z => z.User.Id == user.Id && ((z.Timestamp >
-                                       info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly) && z.Achievement.Id == aim.AchievementId).
-                                       ToArray().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).ToArray();
-                                        if (ww1.Any(z => z.Sum(u => u.Count * GetModifier(u.Timestamp, context)) >= aim.Count))
-                                            return true;
-                                    }
-                                    break;
-                                case PeriodTypeEnum.Day:
-                                    {
-
-                                        var ww0 = context.AchievementValueItems.Where(z => z.User.Id == user.Id && ((z.Timestamp >
-                                       info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly) && z.Achievement.Id == aim.AchievementId).ToArray();
-                                        if (cnstr.MinCountPerSet != null)
-                                        {
-                                            ww0 = ww0.Where(z => z.Count >= cnstr.MinCountPerSet).ToArray();
-                                        }
-                                        var ww1 = ww0.ToArray().GroupBy(z => z.Timestamp.Date).ToArray();
-                                        int times = 1;
-                                        if (cnstr.Times != null)
-                                        {
-                                            times = cnstr.Times.Value;
-
-                                        }
-                                        return ww1.Count(z => z.Sum(u => u.Count) >= aim.Count) >= times;
-                                    }
-                                    break;
-                                case PeriodTypeEnum.Set:
-                                    {
-                                        var ww1 = context.AchievementValueItems.Where(z => z.User.Id == user.Id && ((z.Timestamp >
-                                        info.StartTime.Value) || !info.Challenge.UseValuesAfterStartOnly) && z.Achievement.Id == aim.AchievementId);
-                                        if (ww1.Any())
-                                        {
-                                            var fr = ww1.OrderByDescending(z => z.Count).First();
-                                            if (cnstr.Times != null)
-                                            {
-                                                return ww1.Count(z => z.Count >= aim.Count) >= cnstr.Times;
-                                            }
-                                            if (fr.Count >= aim.Count)
-                                            {
-                                                return true;
-
-                                            }
-                                        }
-                                    }
-
-                                    break;
-                                case PeriodTypeEnum.Whole:
-                                    { }
-
-                                    break;
-                            }
-                        }
-                    }
-                    break;
-                case AimType.Max:
-                    break;
-                case AimType.Min:
-                    break;
-                default:
-                    break;
-            }
-            return false;
-        }
 
         public static double GetProgressLastDay(AchieverContext ctx, UserChallengeInfo chitem2)
         {
@@ -473,8 +346,8 @@ namespace Achiever
         {
             var nw = DateTime.UtcNow.Date;
 
-            var p = GetPercentOfAim(ctx, aim, uci, nw);
-            var p2 = GetPercentOfAim(ctx, aim, uci);
+            var p = aim.GetPercentOfAim(ctx, uci, nw);
+            var p2 = aim.GetPercentOfAim(ctx, uci);
             return p2 - p;
         }
 
@@ -500,7 +373,7 @@ namespace Achiever
         }
 
         public static double GetPercentOfChallenge(AchieverContext ctx, int chId, int userId, DateTime? lastFilter = null)
-        {            
+        {
             if (!ctx.UserChallengeInfos.Any(z => z.UserId == userId && z.ChallengeId == chId))
                 return 0;
 
@@ -509,7 +382,7 @@ namespace Achiever
 
             foreach (var item in chitem2.Challenge.Aims)
             {
-                perctot += Helper.GetPercentOfAim(ctx, item, chitem2, lastFilter);
+                perctot += item.GetPercentOfAim(ctx, chitem2, lastFilter);
             }
             var ar1 = ctx.ChallengeRequirements.Include(z => z.Parent).Include(z => z.Child).Where(z => z.Parent.Id == chitem2.ChallengeId).ToArray();
             foreach (var item in ar1)
@@ -527,151 +400,8 @@ namespace Achiever
             return perctot;
         }
 
-        public static double GetPercentOfAim(AchieverContext ctx, ChallengeAimItem bb, UserChallengeInfo chitem2, DateTime? lastFilter = null)
-        {
-            int target = bb.Count.Value;            
-
-            /*var aa = ctx.AchievementValueItems.Where(z =>
-            z.User.Id == chitem2.UserId &&
-            z.Achievement.Id == bb.AchievementId && ((z.Timestamp > chitem2.StartTime.Value) || !chitem2.Challenge.UseValuesAfterStartOnly));
-            */
-
-            var chlds = ctx.AchievementItems.Where(z => z.Parent.Id == bb.AchievementId).Select(z => z.Id).ToArray();
-
-            var aa = ctx.AchievementValueItems.Where(z => z.User.Id == chitem2.UserId
-            && (z.Achievement.Id == bb.AchievementId || chlds.Contains(z.Achievement.Id)) && ((z.Timestamp > chitem2.StartTime.Value) || !chitem2.Challenge.UseValuesAfterStartOnly));
-
-            if (lastFilter != null)
-            {
-                aa = aa.Where(z => z.Timestamp < lastFilter.Value);
-            }
-
-            var cnstr = Helper.ExtractAimSettings(bb);
-            if (aa.Count() == 0)
-            {
-                return 0;
-            }
-
-            switch (bb.Type)
-            {
-                case AimType.Bool:
-                    {
-                        int cnt = 0;
-                        switch (cnstr.Period)
-                        {
-                            case PeriodTypeEnum.Month:
-                                {
-                                    var fr = aa.ToList().GroupBy(z => z.Timestamp.Date.Month + ";" + z.Timestamp.Date.Year).OrderByDescending(z => z.Sum(u => u.Count)).First();
-                                    cnt = fr.Sum(z => z.Count);
-                                }
-                                break;
-                            case PeriodTypeEnum.Day:
-                                {
-                                    var aaa = aa.ToList();
-                                    if (cnstr.MinCountPerSet != null)
-                                    {
-                                        aaa = aaa.Where(z => z.Count >= cnstr.MinCountPerSet.Value).ToList();
-                                    }
-                                    if (aaa.Count == 0)
-                                        break;
-
-                                    var fr = aaa.GroupBy(z => z.Timestamp.Date).OrderByDescending(z => z.Sum(u => u.Count)).First();
 
 
-                                    if (cnstr.Times != null)
-                                    {
-                                        cnt = aaa.GroupBy(z => z.Timestamp.Date).Where(z => z.Sum(u => u.Count) >= bb.Count.Value).Count();
-                                        target = cnstr.Times.Value;
-                                    }
-                                    else
-                                    {
-                                        cnt = fr.Sum(z => z.Count);
-                                    }
-
-                                }
-                                break;
-                            case PeriodTypeEnum.Set:
-                                {
-                                    var fr = aa.OrderByDescending(z => z.Count).First();
-                                    cnt = fr.Count;
-
-                                    if (cnstr.Times != null)
-                                    {
-
-                                        target = cnstr.Times.Value;
-
-                                        var lst = aa.Where(z => z.Count >= bb.Count).ToList();
-                                        cnt = lst.Count;
-
-                                    }
-                                    else
-                                    if (aa.Any())
-                                    {
-                                        var fr2 = aa.OrderByDescending(z => z.Count).First();
-                                        cnt = fr2.Count;
-                                    }
-                                    else
-                                    {
-                                        cnt = 0;
-                                    }
-                                }
-                                break;
-                            case PeriodTypeEnum.Whole:
-                                { cnt = aa.Sum(z => z.Count); }
-                                break;
-                        }
-
-                        if (cnt > target)
-                        {
-                            cnt = target;
-                        }
-                        return cnt / (float)target;
-                    }
-                    break;
-                case AimType.Count:
-                    {
-                        var cnt = aa.Sum(z => z.Count);
-                        if (cnt > target)
-                        {
-                            cnt = target;
-                        }
-                        var percent = cnt / (float)target;
-                        return percent;
-                    }
-                    break;
-            }
-            return 0;
-        }
-
-        public static AimConstraints ExtractAimSettings(ChallengeAimItem aim)
-        {
-            AimConstraints ret = new AimConstraints();
-            if (string.IsNullOrEmpty(aim.Settings)) return null;
-            dynamic stuff = JsonConvert.DeserializeObject(aim.Settings);
-
-            var vals = Enum.GetValues(typeof(PeriodTypeEnum));
-            foreach (var va in vals)
-            {
-                if (stuff.set != null && stuff.set.constraints != null && stuff.set.constraints.minCount != null)
-                {
-                    ret.MinCountPerSet = int.Parse(stuff.set.constraints.minCount.ToString());
-                }
-                if (stuff.times != null)
-                {
-                    ret.Times = int.Parse(stuff.times.ToString());
-                }
-                if (stuff.set != null && stuff.set.constraints != null && stuff.set.constraints.amount != null)
-                {
-                    ret.Times = int.Parse(stuff.set.constraints.amount.ToString());
-                }
-                if (va.ToString().ToLower() == stuff.period.ToString())
-                {
-                    ret.Period = (PeriodTypeEnum)va;
-                }
-            }
-
-            return ret;
-        }
 
         public static int? GetFontSize(string json)
         {

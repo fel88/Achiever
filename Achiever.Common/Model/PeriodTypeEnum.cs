@@ -6,6 +6,7 @@
         Day,
         Whole,
         Month,
-        Year            
+        Year,
+        Series
     }
 }

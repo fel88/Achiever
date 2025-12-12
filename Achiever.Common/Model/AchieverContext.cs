@@ -109,5 +109,21 @@ namespace Achiever.Common.Model
             }
 
         }
+        public  decimal GetModifier(DateTime time)
+        {
+            decimal ret = 1;
+            foreach (var item in Penalties.Include(z => z.Achievement).ToArray())
+            {
+                var achId = item.Achievement.Id;
+                var ww = AchievementValueItems.Where(z => z.Achievement.Id == achId).ToArray();
+                var dd = ww.Where(z => time > z.Timestamp && Math.Abs((z.Timestamp - time).TotalDays) < item.Days).ToArray();
+                for (int i = 0; i < dd.Length; i++)
+                {
+                    ret *= item.Modifier;
+                }
+            }
+
+            return ret;
+        }
     }
 }

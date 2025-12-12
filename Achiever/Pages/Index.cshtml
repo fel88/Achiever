@@ -307,7 +307,7 @@
                 {
                     var item = ctx.AchievementItems.SingleOrDefault(z => z.Id == bb.AchievementId);
                     string clr = "#bbddff";
-                    bool achieved = Helper.IsAimAchieved(ctx, chitem2, bb, user);
+                    bool achieved = bb.IsAimAchieved(ctx, chitem2, user);
                     if (achieved)
                     {
                         clr = "#aaffaa";
@@ -334,8 +334,8 @@
                             int target = bb.Count.Value;
 
 
-                            var cnstr = Helper.ExtractAimSettings(bb);
-                            var percnt = Helper.GetPercentOfAim(ctx, bb, chitem2);
+                            var cnstr = bb.ExtractAimSettings();
+                            var percnt = bb.GetPercentOfAim(ctx, chitem2);
 
                             switch (bb.Type)
                             {

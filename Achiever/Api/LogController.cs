@@ -91,7 +91,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
+                    penalty = (int)(item.Count - context.GetModifier(item.Timestamp) * item.Count)
                 });
             }
             return new JsonResult(new { items = ret, names = context.AchievementItems.Select(z => new { name = z.Name, id = z.Id }) });
@@ -178,7 +178,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
+                    penalty = (int)(item.Count - context.GetModifier(item.Timestamp) * item.Count)
                 });
             }
             foreach (var item in filter2d)
@@ -192,7 +192,7 @@ namespace Achiever.Api
                     count = item.Count,
                     timestamp = item.Timestamp,
                     desc = item.Description,
-                    penalty = (int)(item.Count - Helper.GetModifier(item.Timestamp, context) * item.Count)
+                    penalty = (int)(item.Count - context.GetModifier(item.Timestamp) * item.Count)
                 });
             }
             return new JsonResult(new { items = ret, names = context.AchievementItems.Select(z => new { name = z.Name, id = z.Id }) });

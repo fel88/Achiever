@@ -139,6 +139,7 @@ namespace Achiever.Api
                 dynamic currentStr = 0;
                 dynamic current = 0;
                 bool hasCurrent = false;
+                bool hasRecord = false;
 
                 DateTime? dts1 = null;
 
@@ -158,6 +159,7 @@ namespace Achiever.Api
                         var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).OrderByDescending(z => z.Count * z.Count2).ToArray();
                         var total = frr.Count * frr.Count2 / 100.0;
 
+                        hasRecord = true;
                         record = (int)total;
                         recordStr = $"{frr.Count} x {frr.Count2 / 100.0} = {frr.Count * frr.Count2 / 100.0}";
 
@@ -183,6 +185,7 @@ namespace Achiever.Api
                         var frr = all.OrderByDescending(z => z.Count).First();
                         var frr2 = all.Where(z => z.Timestamp.Date == DateTime.UtcNow.Date).OrderByDescending(z => z.Count).ToArray();
 
+                        hasRecord = true;
                         record = frr.Count;
                         recordStr = frr.Count.ToString();
                         dts1 = frr.Timestamp;
@@ -203,10 +206,11 @@ namespace Achiever.Api
                     name = item.Name,
                     doubled,
                     hasCurrent,
+                    hasRecord,
                     hasDate = dts1.HasValue,
                     date = dts1.HasValue ? ($"{dts1.Value.ToLongDateString()} {dts1.Value.ToLongTimeString()}") : "none",
                     record = recordStr,
-                    isRecord = (record == current && dts1 == DateTime.UtcNow.Date),
+                    isRecord = (record == current && dts1.HasValue && dts1.Value.Date == DateTime.UtcNow.Date),
                     currentSum = currentStr,
                     remainsToRecord = record - current,
                     lastRecordTimestamp

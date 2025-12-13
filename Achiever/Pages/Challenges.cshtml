@@ -20,7 +20,24 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
+
+        async function loadAllBadges() {
+            const divs = document.querySelectorAll(".challenge-badge-div");
+            divs.forEach(async (d) => {
+                await fetch('/api/Cabinet/badge/' + d.getAttribute('challengeId'), {
+                    method: 'GET',
+                }).then((r) => {
+                    if (r.ok) {
+                        return r.text();
+                    } else {
+                        console.log(r.status);
+                        throw new Error('promise chain cancelled');
+                    }
+                }).then((r) => { d.innerHTML = r; });
+            });
+        }
+        $(document).ready(async function () {
+            await loadAllBadges();
 
             $(".set-constraint-inp").click(function () {
                 if ($(this).prop('checked')) {
@@ -65,6 +82,42 @@
                 } else {
                     sub2.hide();
                 }
+            });
+
+              $(".set-as-unlimited-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите сменить тип трекинга на: все время?'))
+                    return;
+
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/tracking/' + cid + '/alltime', {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
+
+            $(".set-as-warmup-challenge-btn").click(async function (ee) {
+                ee.preventDefault();
+
+                if (!confirm('Вы уверены что хотите сменить тип трекинга на: с принятия?'))
+                    return;
+
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/tracking/' + cid + '/accept', {
+                    method: 'PATCH'
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
             });
 
             $(".check-in-btn").click(async function (ee) {
@@ -467,7 +520,7 @@
             if (!(item.OwnerId == null || item.OwnerId == user.Id))
                 continue;
 
-            var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
+            var a1 = ctx.UserChallengeInfos.FirstOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
             if (round == 0 && a1 != null)
                 continue;
 
@@ -476,15 +529,44 @@
 
 
             <div style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
+
                 @{
 
                     <h3><a href="#" class="header1">Челендж: @item.Name </a></h3>
+                    <p>
+                        <span class="challenge-badge-div" challengeId="@item.Id"></span>
+                    </p>
 
                     @if (item.OwnerId == user.Id)
                     {
                         <a class="delete-challenge-btn" itemId="@item.Id" href="#">удалить челендж</a>
                         <a class="random-badge-challenge-btn" itemId="@item.Id" href="#">новый рандомный значок</a>
-                        <a class="add-item-btn" href="#">+ добавить упражнение</a>
+                        @if (item.UntilDate != null)
+                        {
+                            <p>
+                                Идет до: @($"{item.UntilDate.Value.ToLongDateString()} {item.UntilDate.Value.ToLongTimeString()}")
+                            </p>
+                        }
+                        @if (item.UseValuesAfterStartOnly)
+                        {
+                            <p>
+                                Текущий тип челенджа: возобновляемый <a style="padding:5px" class="set-as-unlimited-challenge-btn" itemId="@item.Id" href="#">(сделать невозобновляемым)</a>
+
+                            </p>
+                        }
+                        else
+                        {
+
+                            <p>
+                                Текущий тип челенджа: невозобновляемый <a style="padding:5px" class="set-as-warmup-challenge-btn" itemId="@item.Id" href="#">(сделать возобновляемым)</a>
+                            </p>
+
+                        }
+                        <p>
+                            <a class="add-item-btn" href="#">+ добавить упражнение</a>
+                        </p>
+
+
                         <form class="form3">
                             <select>
                                 @foreach (var aitem in ctx.AchievementItems.Where(z => z.OwnerId == null || z.OwnerId == user.Id))

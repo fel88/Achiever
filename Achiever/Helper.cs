@@ -22,52 +22,20 @@ namespace Achiever
             return Helper.GetUser(s) != null;
         }
 
-        public static bool IsComplete(int chId, int userId)
-        {
-            AchieverContext context = AchieverContextHolder.GetContext();
-            var user = context.Users.Find(userId);
-
-            var userInfos = context.UserChallengeInfos.Where(z => z.ChallengeId == chId && userId == z.UserId).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray();
-            if (!userInfos.Any())
-                return false;
-
-            if (userInfos.Any(z => z.IsComplete))
-                return true;
-
-            var item = userInfos.Where(z => !z.IsComplete).First();
-
-            foreach (var aim in item.Challenge.Aims)
-            {
-                bool compl = aim.IsAimAchieved(context, item, user);
-
-                if (!compl)
-                {
-                    return false;
-                }
-            }
-
-            var a1 = context.ChallengeRequirements.Include(z => z.Parent).Include(z => z.Child).Where(z => z.Parent.Id == chId).ToArray();
-            foreach (var zz in a1)
-            {
-                if (!IsComplete(zz.Child.Id, userId))
-                    return false;
-            }
-
-            return true;
-
-        }
+     
         public static async void CheckAllChallenges(int userId)
         {
             AchieverContext context = AchieverContextHolder.GetContext();
             var user = context.Users.Find(userId);
             foreach (var item in context.UserChallengeInfos.Where(z => !z.IsComplete && z.User.Id == userId).Include(z => z.Challenge).Include(z => z.Challenge.Aims))
             {
-                if (IsComplete(item.ChallengeId, userId))
-                {
-                    item.IsComplete = true;
-                    item.CompleteTime = DateTime.Now;
-                    await context.SaveChangesAsync();
-                }
+                item.CheckAndUpdateComplete(context);
+                //if (IsComplete(item.ChallengeId, userId))
+                //{
+                //    item.IsComplete = true;
+                //    item.CompleteTime = DateTime.Now;
+                //    await context.SaveChangesAsync();
+                //}
             }
         }
 

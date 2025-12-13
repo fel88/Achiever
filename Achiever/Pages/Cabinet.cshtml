@@ -79,26 +79,13 @@
                 ee.preventDefault();
                 await acceptColors(cid, val, back);
             });
-            $(".set-as-unlimited-challenge-btn").click(async function (ee) {
+
+
+            $(".check-in-btn").click(async function (ee) {
                 ee.preventDefault();
-                if (!confirm('Вы уверены что хотите сменить тип трекинга на: все время?')) return;
-                let cid = $(this).attr('itemId');
-                await fetch('/api/Challenge/tracking/' + cid + '/alltime', {
-                    method: 'PATCH'
-                }).then((r) => {
-                    if (r.ok) {
-                        window.location.reload(true);
-                    } else {
-                        console.log(r.status);
-                    }
-                });
-            });
-            $(".set-as-warmup-challenge-btn").click(async function (ee) {
-                ee.preventDefault();
-                if (!confirm('Вы уверены что хотите сменить тип трекинга на: с принятия?')) return;
-                let cid = $(this).attr('itemId');
-                await fetch('/api/Challenge/tracking/' + cid + '/accept', {
-                    method: 'PATCH'
+                let iid = parseInt($(this).attr('itemId'));
+                await fetch('/api/Challenge/checkin/' + iid, {
+                    method: 'POST'
                 }).then((r) => {
                     if (r.ok) {
                         window.location.reload(true);
@@ -210,7 +197,8 @@
             });
 
 
-            $(".badge-btn").click(function () {
+            $(".badge-btn").click(function (ee) {
+                  ee.preventDefault();
                 if ($(this).next(".badge-info-div").is(":visible")) {
                     $(this).next(".badge-info-div").hide();
                     return;
@@ -363,49 +351,65 @@
 
     <script>
 
-        $(document).ready(function () {
-            $('.badge-btn').click(function (ee) {
-                ee.preventDefault();
-                const div = $("#badgeInfo");
-                var infoId = $(this).attr('infoId');
-                const lid = $(div).attr('lastInfoId');
-                if (lid == infoId && $(div).css('display') == 'block') {
-                    $(div).hide();
-                    return;
-                }
+                $(document).ready(function () {
+                    $('.complete-badge-btn').click(function (ee) {
+                        ee.preventDefault();
 
-                $(div).attr('lastInfoId', infoId);
-
-
-                const uri = 'api/Default';
-
-                $.ajax({
-                    type: "GET",
-                    url: uri + '/' + infoId,
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    success: function (data) {
-                        div.css('display', 'block');
-                        console.log(data);
-                        div.html('');
-                        let dat = new Date(data.compete);
-                        console.log('dat:' + dat);
-                        div.append('<p>Челендж: ' + data.name + '</p>');
-                        div.append('Время получения: ' + data.complete);
-                        for (i = 0; i < data.text.length; i++) {
-                            div.append("<div style='background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px'>" + data.text[i] + '</div>')
+                          if ($(this).next(".complete-badge-info-div").is(":visible")) {
+                            $(this).next(".complete-badge-info-div").hide();
+                            return;
                         }
-                    },
-                    failure: function (errMsg) {
+                        $(".complete-badge-info-div").each(function () {
+                            $(this).hide();
+                        });
 
-                    }
+                        //$(this).next(".complete-badge-info-div").toggle()
+
+
+                        //const div = $("#badgeInfo");
+                         const div=$(this).next(".complete-badge-info-div");
+                        var infoId = $(this).attr('infoId');
+                        const lid = $(div).attr('lastInfoId');
+
+                       // if (lid == infoId && $(div).css('display') == 'block') {
+        //                    $(div).hide();
+                        //    return;
+                     //   }
+
+                        $(div).attr('lastInfoId', infoId);
+
+
+                        const uri = 'api/Default';
+
+                        $.ajax({
+                            type: "GET",
+                            url: uri + '/' + infoId,
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (data) {
+                                div.css('display', 'block');
+                                let span=div.find('span');
+                                console.log(data);
+                                span.html('');
+                                let dat = new Date(data.compete);
+                                console.log('dat:' + dat);
+                                span.append('<p>Челендж: ' + data.name + '</p>');
+                                span.append('Время получения: ' + data.complete);
+                                for (i = 0; i < data.text.length; i++) {
+                                    span.append("<div style='background-color: #bbddff; border-radius: 20px;padding:10px;margin:10px'>" + data.text[i] + '</div>')
+                                }
+                                        $(this).next(".complete-badge-info-div").toggle()
+                            },
+                            failure: function (errMsg) {
+
+                            }
+                        });
+
+
+                    });
+
+
                 });
-
-
-            });
-
-
-        });
     </script>
 }
 <style>
@@ -425,7 +429,7 @@
         progress::-webkit-progress-value {
             background: orange;
             /*  border: 1px solid black;
-                                                                                    height: 20px;*/
+                                                                                                                    height: 20px;*/
             border-radius: 10px;
         }
 
@@ -490,73 +494,58 @@
     Helper.CheckAllChallenges(user.Id);
 
 
-    void RenderPath(int width, string fill)
-    {
-        var outp = $"M5,5 h{width} a5,5 0 0 1 5,5 v1 a5,5 0 0 1 -5,5 h-{width} a5,5 0 0 1 -5,-5 v-1 a5,5 0 0 1 5,-5 z";
-        <path d="@outp" fill="@fill" stroke="black" stroke-width="0.5" />
-    }
+    // void RenderPath(int width, string fill)
+    // {
+    //     var outp = $"M5,5 h{width} a5,5 0 0 1 5,5 v1 a5,5 0 0 1 -5,5 h-{width} a5,5 0 0 1 -5,-5 v-1 a5,5 0 0 1 5,-5 z";
+    //     <path d="@outp" fill="@fill" stroke="black" stroke-width="0.5" />
+    // }
 
 
-    void RenderProgressBar(float percent, int width, string fill)
-    {
-        return;
-        var len = width * percent;
+    // void RenderProgressBar(float percent, int width, string fill)
+    // {
+    //     return;
+    //     var len = width * percent;
 
-        RenderPath(width, "none");
-        if (len > 10)
-        {
-            RenderPath((int)len, "orange");
-        }
+    //     RenderPath(width, "none");
+    //     if (len > 10)
+    //     {
+    //         RenderPath((int)len, "orange");
+    //     }
 
 
-    }
+    // }
 
 }
-@foreach (var item in ctx.UserChallengeInfos.Where(z => z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray())
+@foreach (var challenge in ctx.Challenges.ToArray())
 {
+    if (!ctx.UserChallengeInfos.Any(z => z.ChallengeId == challenge.Id && z.User.Id == user.Id && z.IsComplete))
+        continue;
 
-    if (!item.IsComplete) continue;
-    var str1 = "";
-    if (item.CompleteTime != null)
-    {
-        str1 = item.CompleteTime.ToString();
-    }
-    StringBuilder st = new StringBuilder();
-    st.Append("Дата получения: " + str1);
+    var arr1 = ctx.UserChallengeInfos.Where(z => z.ChallengeId == challenge.Id && z.IsComplete && z.User.Id == user.Id).Include(z => z.Challenge).Include(z => z.Challenge.Aims).ToArray();
+    var ord = arr1.OrderByDescending(z => z.StartTime).First();
+    var finished = ctx.UserChallengeInfos.Where(z => z.ChallengeId == challenge.Id && z.User.Id == user.Id && z.IsComplete).ToArray();
 
-    foreach (var zitem in item.Challenge.Aims.ToArray())
-    {
-        //var label = Helper.GetAimLabels(item, zitem, user);
-        var item1 = ctx.AchievementItems.SingleOrDefault(z => z.Id == zitem.AchievementId);
-        st.Append(item1.Name + " кол-во: " + zitem.Count + "&#10;");
-        //<div>@label.Title</div>
-    }
-
-    <a class="badge-btn" href="#" title="@st.ToString()" infoId="@item.Id">
-        <span class="challenge-badge-div" challengeId="@item.Challenge.Id"></span>
-        @{
-
-            //await Html.RenderPartialAsync("Badge", new Tuple<AchieverContext, Challenge>(ctx, item.Challenge));
-
-        }
+    <a class="complete-badge-btn" href="#" infoId="@ord.Id">
+        <span class="challenge-badge-div" challengeId="@challenge.Id"></span>
     </a>
+
+    <div class="complete-badge-info-div" style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px; display: none">
+        <p><b>Тип челенджа :</b> @(challenge.IsRenewable() ? "возобновлемый" : "не возобновляемый")</p>
+        <p><b>Срок окончания:</b> @(challenge.UntilDate != null ? $"{challenge.UntilDate.Value.ToLongDateString()} {challenge.UntilDate.Value.ToLongTimeString()}" : "безсрочный")</p>
+        <p><b>Челендж пройден:</b> @finished.Count() раз</p>
+        @foreach (var item in finished)
+        {
+            <p>Дата завершения: @($"{item.CompleteTime.Value.ToLongDateString()} {item.CompleteTime.Value.ToLongTimeString()}")</p>
+        }
+
+        @if (challenge.IsRenewable() && !challenge.IsExpired())
+        {
+            <a class="check-in-btn" itemid="@challenge.Id" href="#">принять участие повторно</a>
+        }
+        <span></span>
+    </div>
+
 }
-
-
-
-@*<div id="badgeInfo" style="margin: 20px;padding:20px; display:none; background-color: aquamarine; border-radius: 20px">
-
-    </div>*@
-<div id="badgeInfo" style="border-radius: 20px;
-        background-color: azure;
-        display: none;
-        padding: 5px;
-        margin: 5px;
-        border: 1px solid;
-    ">
-</div>
-
-
 
 
 <div class="text-center">
@@ -648,15 +637,7 @@
                     <div>Цвет фона: <input class="back-badge-clr-input" value="@Helper.GetBackColor(chitem2.Challenge.BadgeSettings)" itemId="@chitem2.Challenge.Id" type="color" /></div>
                     <div>Цвет текста: <input class="fore-badge-clr-input" value="@Helper.GetColor(chitem2.Challenge.BadgeSettings)" itemId="@chitem2.Challenge.Id" type="color" /></div>
 
-                    @if (chitem.UseValuesAfterStartOnly)
-                    {
-                        <a style="padding:5px" class="set-as-unlimited-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">безсрочный отсчет</a>
-                    }
-                    else
-                    {
-                        <a style="padding:5px" class="set-as-warmup-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">отсчет от старта</a>
 
-                    }
                 }
 
                 <a class="leave-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">покинуть челендж</a>
@@ -678,7 +659,7 @@
                             Отсчет от:
                             @if (chitem.UseValuesAfterStartOnly)
                             {
-                                @(chitem2.StartTime.Value.ToLongDateString() + " " + chitem2.StartTime.Value.ToLongTimeString())
+                                @($"{chitem2.StartTime.Value.ToLongDateString()} {chitem2.StartTime.Value.ToLongTimeString()}")
 
                             }
                             else
@@ -763,7 +744,7 @@
                                         cnt = res.cnt;
                                         cnt11 = res.cnt11;
                                         target = res.target;
-                                        secondProgressBarEnabled = res.secondProgressBarEnabled;                                      
+                                        secondProgressBarEnabled = res.secondProgressBarEnabled;
 
                                         bool done = false;
                                         if (cnt > target)

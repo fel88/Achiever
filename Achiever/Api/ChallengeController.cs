@@ -222,12 +222,21 @@ namespace Achiever.Api
         public async Task<IActionResult> ChallengeCheckIn(int id)
         {
             if (!Helper.IsAuthorized(HttpContext.Session))
-            {
                 return Unauthorized();
-            }
 
             var user = Helper.GetUser(HttpContext.Session);
             using var ctx = AchieverContextHolder.GetContext();
+            var challenge = ctx.Challenges.Find(id);
+
+            if (challenge.IsExpired())            
+                return BadRequest("the challenge expired");
+            
+            if (ctx.UserChallengeInfos.Any(z => z.ChallengeId == id && z.UserId == user.Id && !z.IsComplete))            
+                return BadRequest("already unfinished challenge");            
+
+            if (!challenge.UseValuesAfterStartOnly && ctx.UserChallengeInfos.Any(z => z.ChallengeId == id && z.UserId == user.Id))            
+                return BadRequest("challenge can't be taken more then one time");
+            
             ctx.UserChallengeInfos.Add(new UserChallengeInfo()
             {
                 UserId = user.Id,
@@ -364,7 +373,7 @@ namespace Achiever.Api
             await ctx.SaveChangesAsync();
             return Ok();
         }
-     
+
         public static string[] Tokenize(string data)
         {
             List<string> ret = new List<string>();
@@ -505,17 +514,17 @@ namespace Achiever.Api
             var clr1 = Color.FromArgb(r.Next(255), r.Next(255), r.Next(255));
             var clr2 = Color.FromArgb(r.Next(255), r.Next(255), r.Next(255));
 
-            int counter = 0; 
+            int counter = 0;
             var brightness = clr1.GetBrightness();
 
-             //clr2 = brightness > 0.5 ? Color.Black : Color.White;
+            //clr2 = brightness > 0.5 ? Color.Black : Color.White;
             while (ColorContrastCalculator.GetContrastRatio(clr1, clr2) < 5)
             {
                 clr1 = Color.FromArgb(r.Next(255), r.Next(255), r.Next(255));
                 clr2 = Color.FromArgb(r.Next(255), r.Next(255), r.Next(255));
                 //counter++;
-              //  if (counter > 100)
-                  //  break;
+                //  if (counter > 100)
+                //  break;
             }
 
             StringBuilder sb = new StringBuilder();
@@ -537,11 +546,11 @@ namespace Achiever.Api
                     if (arr1[i].Contains("fontSize"))
                     {
                         fs = int.Parse(arr1[i + 2]);
-                        break;                        
+                        break;
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
@@ -549,12 +558,12 @@ namespace Achiever.Api
 'text': " + sb.ToString() + @",
 	'backColor': " + $"'#{clr1.R:X2}{clr1.G:X2}{clr1.B:X2}{clr1.A:X2}'" + @",
 	'color': " + $"'#{clr2.R:X2}{clr2.G:X2}{clr2.B:X2}{clr2.A:X2}'" + @",
-'fontSize': "+fs+@"
+'fontSize': " + fs + @"
 }";
             await ctx.SaveChangesAsync();
-            var data = new { ContrastRatio = ColorContrastCalculator.GetContrastRatio(clr1, clr2) };            
+            var data = new { ContrastRatio = ColorContrastCalculator.GetContrastRatio(clr1, clr2) };
             return Ok(data);
-            
+
         }
         [HttpDelete("/api/[controller]/{id}")]
         public async Task<IActionResult> DeleteChallenge(int id)

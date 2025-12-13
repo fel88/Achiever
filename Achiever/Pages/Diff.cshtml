@@ -57,7 +57,7 @@
         if (chitem2.IsComplete)
             continue;
 
-        var a1 = ctx.UserChallengeInfos.SingleOrDefault(z => z.User.Id == user.Id && z.Challenge.Id == item.Id);
+        var a1 = ctx.UserChallengeInfos.FirstOrDefault(z => !z.IsComplete && z.User.Id == user.Id && z.Challenge.Id == item.Id);
 
         bool has = false;
         foreach (var bb in item.Aims)

@@ -300,25 +300,7 @@ namespace Achiever
 
 
 
-        public static double GetProgressLastDay(AchieverContext ctx, UserChallengeInfo chitem2)
-        {
-            var nw = DateTime.UtcNow.Date;
-
-            var p = GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId, nw);
-            var p2 = GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId);
-
-            return p2 - p;
-        }
-
-        public static double GetProgressLastDay(AchieverContext ctx, ChallengeAimItem aim, UserChallengeInfo uci)
-        {
-            var nw = DateTime.UtcNow.Date;
-
-            var p = aim.GetPercentOfAim(ctx, uci, nw);
-            var p2 = aim.GetPercentOfAim(ctx, uci);
-            return p2 - p;
-        }
-
+      
         public static string[] GetText(string json)
         {
             dynamic stuff = JsonConvert.DeserializeObject(json);
@@ -338,34 +320,6 @@ namespace Achiever
         public static User GetUser(ISession s)
         {
             return s.GetObject<User>("user");
-        }
-
-        public static double GetPercentOfChallenge(AchieverContext ctx, int chId, int userId, DateTime? lastFilter = null)
-        {
-            if (!ctx.UserChallengeInfos.Any(z => z.UserId == userId && z.ChallengeId == chId))
-                return 0;
-
-            UserChallengeInfo chitem2 = ctx.UserChallengeInfos.Include(z => z.Challenge).Include(z => z.Challenge.Aims).Include(z => z.User).FirstOrDefault(z => z.UserId == userId && z.ChallengeId == chId);
-            double perctot = 0;
-
-            foreach (var item in chitem2.Challenge.Aims)
-            {
-                perctot += item.GetPercentOfAim(ctx, chitem2, lastFilter);
-            }
-            var ar1 = ctx.ChallengeRequirements.Include(z => z.Parent).Include(z => z.Child).Where(z => z.Parent.Id == chitem2.ChallengeId).ToArray();
-            foreach (var item in ar1)
-            {
-                var fr = ctx.UserChallengeInfos.FirstOrDefault(z => z.ChallengeId == item.Child.Id && z.UserId == chitem2.UserId);
-                if (fr == null)
-                    continue;
-
-                perctot += GetPercentOfChallenge(ctx, fr.ChallengeId, fr.UserId, lastFilter);
-            }
-
-            perctot /= (chitem2.Challenge.Aims.Count + ar1.Length);
-            //todo: calc all required challenges
-
-            return perctot;
         }
 
 

@@ -57,23 +57,22 @@
         if (chitem2.IsComplete)
             continue;
 
-        var a1 = ctx.UserChallengeInfos.FirstOrDefault(z => !z.IsComplete && z.User.Id == user.Id && z.Challenge.Id == item.Id);
+        //var a1 = ctx.UserChallengeInfos.FirstOrDefault(z => !z.IsComplete && z.User.Id == user.Id && z.Challenge.Id == item.Id);
 
         bool has = false;
         foreach (var bb in item.Aims)
         {
             var ach = ctx.AchievementItems.Find(bb.AchievementId);
-            var pld = Helper.GetProgressLastDay(ctx, bb, a1);
+            var pld = chitem2.GetProgressLastDay(ctx, bb);
             if (pld <= 0)
                 continue;
+
             has = true;
             break;
         }
 
         if (!has)
             continue;
-
-
 
         <div style="border-radius: 5px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px">
             <div>
@@ -85,8 +84,8 @@
 
                 @{
 
-                    var pld1 = Helper.GetProgressLastDay(ctx, chitem2);
-                    var curnp = Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId);
+                    var pld1 = chitem2.GetProgressLastDay(ctx);
+                    var curnp = chitem2.GetPercentOfChallenge(ctx);
 
                     <h3>@item.Name (@(Math.Round(curnp * 100, 1))%) +@(Math.Round(pld1 * 100, 1))%</h3>
                     foreach (var bb in item.Aims)
@@ -94,7 +93,7 @@
                         var ach = ctx.AchievementItems.Find(bb.AchievementId);
                         var cnstr = bb.ExtractAimSettings();
 
-                        var pld = Helper.GetProgressLastDay(ctx, bb, a1);
+                        var pld = chitem2.GetProgressLastDay(ctx, bb);
                         if (pld <= 0)
                             continue;
 
@@ -103,7 +102,7 @@
                         {
                             period = $"({cnstr.Period})";
                         }
-                        var curnp1 = bb.GetPercentOfAim(ctx, a1);
+                        var curnp1 = bb.GetPercentOfAim(ctx, chitem2);
 
                         <div style="background-color:white; border-radius: 5px; padding:5px; margin-bottom:10px; border: 1px blue">
                             @{

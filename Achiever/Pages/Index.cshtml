@@ -275,7 +275,7 @@
         <div class="badge-info-div" style="border-radius: 20px; background-color: azure;padding: 5px; margin: 5px; border: solid 1px; display: none">
             @{
                 <h3><a href="#" class="header1">Челендж: @chitem.Name</a></h3>
-                <div>Завершено: @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId,chitem2.UserId) * 100, 1) + "%")</div>
+                <div>Завершено: @($"{Math.Round(chitem2.GetPercentOfChallenge(ctx) * 100, 1)}%")</div>
                 <p>категории: #спорт, #english</p>
 
 
@@ -551,11 +551,10 @@
                             if (req != null)
                             {
 
-                                var perctot = Helper.GetPercentOfChallenge(ctx, req.ChallengeId,req.UserId);
-                                var progress = Math.Round(perctot * 100, 1) + "%";
+                                var perctot = req.GetPercentOfChallenge(ctx);
+                                var progress = $"{Math.Round(perctot * 100, 1)}%";
 
-
-                                str1 = req.IsComplete ? "(завершено)" : "(не завершено) прогресс: " + progress;
+                                str1 = req.IsComplete ? "(завершено)" : $"(не завершено) прогресс: {progress}";
                                 <p>
                                     @bb.Child.Name @str1
                                     <svg width="440" height="30">

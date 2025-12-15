@@ -658,8 +658,8 @@
 
                 <a class="leave-challenge-btn" itemId="@chitem2.Id" href="#">покинуть челендж</a>
                 <div>
-                    Завершено: @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%")
-                    <progress max="100" value="@((int)(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%") </progress>
+                    Завершено: @(Math.Round(chitem2.GetPercentOfChallenge(ctx) * 100, 1) + "%")
+                    <progress max="100" value="@((int)(Math.Round(chitem2.GetPercentOfChallenge(ctx) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @($"{Math.Round(chitem2.GetPercentOfChallenge(ctx) * 100, 1)}%") </progress>
                 </div>
 
                 <p>категории: #спорт, #english</p>
@@ -943,7 +943,7 @@
 
                             if (req != null)
                             {
-                                var perctot = Helper.GetPercentOfChallenge(ctx, req.ChallengeId, req.UserId);
+                                var perctot = req.GetPercentOfChallenge(ctx);
                                 var progress = Math.Round(perctot * 100, 1) + "%";
 
 

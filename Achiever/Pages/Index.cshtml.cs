@@ -23,6 +23,7 @@ namespace Achiever.Pages
 
         public IActionResult OnGet()
         {
+            return Redirect("Cabinet");
             if (!Helper.IsAuthorized(HttpContext.Session)) return Redirect("Login");
             return null;
         }

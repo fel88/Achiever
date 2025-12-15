@@ -144,7 +144,7 @@ namespace Achiever.Api
                 DateTime? dts1 = null;
 
                 var chlds = context.AchievementItems.Where(z => z.Parent.Id == item.Id).Select(z => z.Id).ToArray();
-                string lastRecordTimestamp = "";
+                DateTime? lastRecordTimestamp = null;
                 bool doubled = false;
                 if (feats != null)
                 {
@@ -172,8 +172,9 @@ namespace Achiever.Api
                         }
 
                         //current = frr2.Sum(u => u.Count * u.Count2) / 100.0;
-                        dts1 = frr.Timestamp;
-                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+                        dts1 = frr.Timestamp;                       
+
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp;
                     }
                 }
                 else
@@ -196,7 +197,7 @@ namespace Achiever.Api
                             hasCurrent = true;
                         }
 
-                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp.ToString("o");
+                        lastRecordTimestamp = all.OrderByDescending(z => z.Timestamp).First().Timestamp;
                     }
                 }
 
@@ -208,7 +209,7 @@ namespace Achiever.Api
                     hasCurrent,
                     hasRecord,
                     hasDate = dts1.HasValue,
-                    date = dts1.HasValue ? ($"{dts1.Value.ToLongDateString()} {dts1.Value.ToLongTimeString()}") : "none",
+                    date = dts1,
                     record = recordStr,
                     isRecord = (record == current && dts1.HasValue && dts1.Value.Date == DateTime.UtcNow.Date),
                     currentSum = currentStr,

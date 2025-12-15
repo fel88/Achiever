@@ -590,6 +590,26 @@ namespace Achiever.Api
             await ctx.SaveChangesAsync();
             return Ok();
         }
+
+        [HttpPatch("/api/[controller]/resetStartDate/{id}")]
+        public async Task<IActionResult> ResetStartDateChallenge(int id)
+        {
+            if (!Helper.IsAuthorized(HttpContext.Session))            
+                return Unauthorized();            
+
+            using var ctx = AchieverContextHolder.GetContext();
+            var uci = ctx.UserChallengeInfos.Find(id);
+           // var huser = Helper.GetUser(HttpContext.Session);
+          //  var user = ctx.Users.Find(huser.Id);
+            
+            DateTime now = DateTime.UtcNow;
+            DateTime firstDayOfMonth = now.Date.AddDays(-(now.Day - 1));
+            uci.StartTime = firstDayOfMonth;            
+            await ctx.SaveChangesAsync();
+
+            return Ok();
+        }
+
         [HttpDelete("/api/[controller]/leave/{id}")]
         public async Task<IActionResult> LeaveChallenge(int id)
         {
@@ -599,10 +619,10 @@ namespace Achiever.Api
             }
 
             using var ctx = AchieverContextHolder.GetContext();
-            var ch = ctx.Challenges.Find(id);
-            var huser = Helper.GetUser(HttpContext.Session);
-            var user = ctx.Users.Find(huser.Id);
-            var uci = ctx.UserChallengeInfos.SingleOrDefault(z => z.UserId == user.Id && z.ChallengeId == ch.Id);
+            var uci = ctx.UserChallengeInfos.Find(id);
+            //var huser = Helper.GetUser(HttpContext.Session);
+           // var user = ctx.Users.Find(huser.Id);
+            
             ctx.UserChallengeInfos.Remove(uci);
             await ctx.SaveChangesAsync();
 

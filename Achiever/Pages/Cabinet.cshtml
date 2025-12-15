@@ -196,6 +196,22 @@
                 });
             });
 
+            $(".reset-start-date-btn").click(async function (ee) {
+                ee.preventDefault();
+                if (!confirm('сбросить отсчет на начало месяца?'))
+                    return;
+
+                let cid = $(this).attr('itemId');
+                await fetch('/api/Challenge/resetStartDate/' + cid, {
+                    method: 'PATCH',
+                }).then((r) => {
+                    if (r.ok) {
+                        window.location.reload(true);
+                    } else {
+                        console.log(r.status);
+                    }
+                });
+            });
 
             $(".badge-btn").click(function (ee) {
                   ee.preventDefault();
@@ -640,7 +656,7 @@
 
                 }
 
-                <a class="leave-challenge-btn" itemId="@chitem2.Challenge.Id" href="#">покинуть челендж</a>
+                <a class="leave-challenge-btn" itemId="@chitem2.Id" href="#">покинуть челендж</a>
                 <div>
                     Завершено: @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%")
                     <progress max="100" value="@((int)(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1)))" style="        width: 100%;        -webkit-appearance: none;        -moz-appearance: none;        appearance: none;"> @(Math.Round(Helper.GetPercentOfChallenge(ctx, chitem2.ChallengeId, chitem2.UserId) * 100, 1) + "%") </progress>
@@ -666,6 +682,7 @@
                             {
                                 <text>за все время</text>
                             }
+                            <a href="#" class="reset-start-date-btn" itemId="@chitem2.Id">сбрость отсчет на начало месяца</a>
                         </p>
                         if (ts != null)
                         {

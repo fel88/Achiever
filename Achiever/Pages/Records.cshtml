@@ -66,6 +66,11 @@
         async function  createSetTable(){
                  let setStats=  await fetchJson('/api/Cabinet/data/records/set');
 
+
+
+                setStats = [...setStats].sort((a, b) => {
+          return new Date(b.lastRecordTimestamp).getTime() - new Date(a.lastRecordTimestamp).getTime();
+        });
                           // Get the table body and the template
                 const tbody = document.querySelector("#set-table tbody");
                 const template = document.querySelector("#set-row-template");
@@ -88,7 +93,8 @@
 
                         clone.querySelector('.set-row-name ').appendChild(clone_btn);
 
-                        clone.querySelector('.set-row-date').innerHTML = Boolean(p.hasDate)?p.date:'<span>нет данных</span>';
+                        clone.querySelector('.set-row-last-date').innerHTML = Boolean(p.hasRecord)?new Date(p.lastRecordTimestamp):'<span>нет данных</span>';
+                        clone.querySelector('.set-row-record-date').innerHTML = Boolean(p.hasDate)?new Date(p.date):'<span>нет данных</span>';
 
                         if(Boolean(p.hasRecord))
                         {
@@ -480,8 +486,9 @@
     <table id="set-table" style="display:none; border: solid 1px;">
         <tr>
             <th style=" border: 1px solid black;padding:10px;">Упражнение</th>
-            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>            
-            <th style=" border: 1px solid black;padding:10px;">Сегодня</th>            
+            <th style=" border: 1px solid black;padding:10px;">Последний подход</th>
+            <th style=" border: 1px solid black;padding:10px;">Дата рекорда</th>
+            <th style=" border: 1px solid black;padding:10px;">Сегодня</th>
             <th style=" border: 1px solid black;padding:10px;">Рекорд</th>
         </tr>
     </table>
@@ -497,7 +504,8 @@
                     <span style="margin: 5px">добавить</span>
                 </a>
             </td>
-            <td style=" border: 1px solid black;padding:10px;" class="set-row-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-last-date"></td>
+            <td style=" border: 1px solid black;padding:10px;" class="set-row-record-date"></td>
             <td style=" border: 1px solid black;padding:10px;" class="set-row-current"></td>
             <td style=" border: 1px solid black;padding:10px;" class="set-row-record"></td>
 
